@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/layout/header';
 
 export const metadata: Metadata = {
-  title: 'TourWeave',
+  title: 'BiblioGlobusTourWeaveApp',
   description: 'Find your next tour package with AI-enriched details.',
 };
 
