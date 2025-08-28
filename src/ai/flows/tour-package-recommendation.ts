@@ -62,13 +62,13 @@ const searchToursTool = ai.defineTool({
       mealType: input.mealType,
       travelers: input.travelers || 2,
   });
-  // Return a limited set of fields to the AI
+  // Return a limited set of fields to the AI to keep the context small
   return results.slice(0, 5).map(tour => ({
     tourId: tour.id,
     country: tour.country,
     city: tour.city,
     hotelName: tour.hotel.name,
-    hotelAddress: tour.hotel.address,
+    hotelAddress: tour.hotel.address, // Pass address for enrichment
     stars: tour.hotel.stars,
     price: tour.price,
     departureDate: tour.departureDate,
