@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { UserNav } from '@/components/auth/user-nav';
-import { Globe } from 'lucide-react';
+import { Globe, Sparkles } from 'lucide-react';
+import { Button } from '../ui/button';
 
 export function Header() {
   return (
@@ -13,6 +14,14 @@ export function Header() {
               BiblioGlobusTourWeaveApp
             </span>
           </Link>
+          <nav className="flex items-center space-x-6 text-sm font-medium">
+            <Link
+                href="/ai-assistant"
+                className="transition-colors hover:text-foreground/80 text-foreground/60"
+            >
+                AI Assistant
+            </Link>
+          </nav>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">
           <UserNav />

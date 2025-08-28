@@ -10,30 +10,33 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { searchTours } from '@/lib/biblio-globus/search';
+import type { Tour } from '@/types';
+import { enrichHotelInfo, EnrichHotelInfoOutput } from './enrich-hotel-info';
 
 const RecommendTourPackagesInputSchema = z.object({
-  budget: z.number().describe('The client\u0027s budget for the tour package.'),
-  interests: z.string().describe('The client\u0027s interests (e.g., history, adventure, relaxation).'),
-  travelStyle: z.string().describe('The client\u0027s preferred travel style (e.g., luxury, budget-friendly, family-friendly).'),
-  country: z.string().describe('The country the client wants to visit.'),
-  departureCity: z.string().describe('The city the client will depart from.'),
-  departureDate: z.string().describe('The date the client will depart.'),
-  duration: z.number().describe('The duration of the trip in days.'),
+  preferences: z.string().describe("A natural language description of the client's preferences (e.g., budget, interests, travel style, destination, dates, duration)."),
 });
 export type RecommendTourPackagesInput = z.infer<typeof RecommendTourPackagesInputSchema>;
 
 const TourPackageSchema = z.object({
   tourName: z.string().describe('The name of the tour package.'),
-  description: z.string().describe('A brief description of the tour package.'),
+  description: z.string().describe('A brief, engaging description of the tour package, tailored to the user\'s preferences.'),
   price: z.number().describe('The price of the tour package.'),
   hotelName: z.string().describe('The name of the hotel included in the package.'),
-  rating: z.number().optional().describe('The rating of the hotel from Google Places.'),
-  photos: z.array(z.string()).optional().describe('URLs of photos of the hotel from Google Places.'),
-  amenities: z.array(z.string()).optional().describe('A list of amenities offered by the hotel.'),
-  url: z.string().describe('The url to book the tour.'),
+  country: z.string().describe('The country where the tour is located.'),
+  city: z.string().describe('The city where the tour is located.'),
+  departureDate: z.string().describe('The departure date in YYYY-MM-DD format.'),
+  returnDate: z.string().describe('The return date in YYYY-MM-DD format.'),
+  imageUrl: z.string().describe('A placeholder image URL for the tour.'),
+  tourId: z.string().describe('The original ID of the tour.'),
+  enrichedInfo: z.any().optional().describe('Enriched hotel information from Google Places.'),
 });
 
-const RecommendTourPackagesOutputSchema = z.array(TourPackageSchema).describe('An array of recommended tour packages.');
+const RecommendTourPackagesOutputSchema = z.object({
+    recommendations: z.array(TourPackageSchema).describe('An array of recommended tour packages.'),
+    summary: z.string().describe('A brief summary of why these recommendations fit the user\'s request.'),
+});
 export type RecommendTourPackagesOutput = z.infer<typeof RecommendTourPackagesOutputSchema>;
 
 export async function recommendTourPackages(input: RecommendTourPackagesInput): Promise<RecommendTourPackagesOutput> {
@@ -42,49 +45,67 @@ export async function recommendTourPackages(input: RecommendTourPackagesInput): 
 
 const searchToursTool = ai.defineTool({
   name: 'searchTours',
-  description: 'Searches for tour packages based on the provided criteria.',
-  inputSchema: RecommendTourPackagesInputSchema,
-  outputSchema: z.array(TourPackageSchema),
+  description: 'Searches for available tour packages based on specific criteria. Use this to find real tours to recommend.',
+  inputSchema: z.object({
+      country: z.string().describe("The destination country. This is a mandatory field."),
+      // Other fields from SearchCriteria are optional for the tool
+      stars: z.string().optional().describe("Hotel star rating (e.g., '5*', '4*')."),
+      mealType: z.string().optional().describe("Meal type (e.g., 'AI', 'BB')."),
+      travelers: z.number().optional().describe("Number of travelers, defaults to 2."),
+  }),
+  outputSchema: z.array(z.any()), // We'll use a generic object array since Tour type is complex
 }, async (input) => {
-  // TODO: Implement the actual call to the searchTours Cloud Function here.
-  // This is a placeholder implementation.
-  console.log('Calling searchTours Cloud Function with:', input);
-  return [
-    {
-      tourName: 'Example Tour Package',
-      description: 'A fantastic tour package for example purposes.',
-      price: 1200,
-      hotelName: 'Example Hotel',
-      rating: 4.5,
-      photos: [
-        'https://example.com/photo1.jpg',
-        'https://example.com/photo2.jpg',
-      ],
-      amenities: ['Free WiFi', 'Swimming pool', 'Restaurant'],
-      url: 'https://example.com/tour',
-    },
-  ];
+  console.log('Tool searching tours with:', input);
+  const results = await searchTours({
+      country: input.country,
+      stars: input.stars,
+      mealType: input.mealType,
+      travelers: input.travelers || 2,
+  });
+  // Return a limited set of fields to the AI
+  return results.slice(0, 5).map(tour => ({
+    tourId: tour.id,
+    country: tour.country,
+    city: tour.city,
+    hotelName: tour.hotel.name,
+    hotelAddress: tour.hotel.address,
+    stars: tour.hotel.stars,
+    price: tour.price,
+    departureDate: tour.departureDate,
+    returnDate: tour.returnDate,
+    imageUrl: tour.imageUrl,
+  }));
 });
+
+const enrichSingleTour = async (tour: any): Promise<any> => {
+    try {
+        const enrichedInfo = await enrichHotelInfo({
+            hotelName: tour.hotelName,
+            hotelAddress: tour.hotelAddress,
+        });
+        return { ...tour, enrichedInfo: enrichedInfo.googlePlacesInfo };
+    } catch (e) {
+        console.error(`Failed to enrich info for ${tour.hotelName}`, e);
+        return tour; // Return original tour if enrichment fails
+    }
+};
 
 const prompt = ai.definePrompt({
   name: 'recommendTourPackagesPrompt',
   input: {schema: RecommendTourPackagesInputSchema},
   output: {schema: RecommendTourPackagesOutputSchema},
   tools: [searchToursTool],
-  prompt: `You are an AI travel agent that recommends tour packages based on client preferences.
+  prompt: `You are an expert AI travel agent. Your goal is to help a human travel agent find the perfect tour packages for their clients based on their preferences.
 
-The user will provide their budget, interests, travel style, and desired destination.
-Use the searchTours tool to find tour packages that match the client\u0027s preferences.
+  Analyze the user's request: {{{preferences}}}
 
-Budget: {{{budget}}}
-Interests: {{{interests}}}
-Travel Style: {{{travelStyle}}}
-Country: {{{country}}}
-Departure City: {{{departureCity}}}
-Departure Date: {{{departureDate}}}
-Duration: {{{duration}}}
-
-Return an array of recommended tour packages in the specified output format.
+  1.  First, identify the key criteria from the request like destination country, budget, travel style (luxury, budget, family), interests, and desired dates. The destination country is the most important criteria for search.
+  2.  Use the 'searchTours' tool to find a list of available tours. You MUST provide at least the country. You can also filter by star rating or meal type if it matches the request.
+  3.  From the search results, select up to 3 of the most relevant tours that best match the client's preferences.
+  4.  For each selected tour, write a short, engaging, and personalized description (the 'description' field) explaining WHY this specific tour is a great fit. For example, if a user wants a relaxing beach vacation, highlight the hotel's beach access or spa facilities.
+  5.  Finally, provide a brief overall summary ('summary' field) of your recommendations, explaining how they align with the client's request.
+  
+  Return a structured response with the summary and the list of recommended packages.
 `,
 });
 
@@ -94,9 +115,19 @@ const recommendTourPackagesFlow = ai.defineFlow(
     inputSchema: RecommendTourPackagesInputSchema,
     outputSchema: RecommendTourPackagesOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+  async (input) => {
+    const { output } = await prompt(input);
+
+    if (!output || !output.recommendations) {
+        throw new Error('AI failed to generate recommendations.');
+    }
+
+    // Enrich tour data with Google Places info in parallel
+    const enrichedRecommendations = await Promise.all(
+        output.recommendations.map(tour => enrichSingleTour(tour))
+    );
+    
+    output.recommendations = enrichedRecommendations;
+    return output;
   }
 );
-
