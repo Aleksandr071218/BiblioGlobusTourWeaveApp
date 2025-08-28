@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { SearchForm, SearchCriteria } from '@/components/tour/search-form';
 import { TourResultsTable } from '@/components/tour/tour-results-table';
-import { getTours } from '@/lib/data';
+import { searchTours } from '@/lib/biblio-globus/search';
 import type { Tour } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -23,10 +23,8 @@ export default function Home() {
 
   const handleSearch = async (criteria: SearchCriteria) => {
     setIsSearching(true);
-    console.log('Searching for tours with criteria:', criteria);
-    // In a real app, you would fetch data from the Biblio-Globus API
-    // and cache it in Firestore. Here we use mock data.
-    const results = await getTours(criteria);
+    // Using the real API search function instead of mock data
+    const results = await searchTours(criteria);
     setTours(results);
     setIsSearching(false);
   };

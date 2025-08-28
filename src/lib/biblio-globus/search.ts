@@ -39,7 +39,7 @@ export async function searchTours(criteria: SearchCriteria): Promise<Tour[]> {
 
   try {
     const cookie = await authenticate();
-    const apiClient = createApiClient(cookie);
+    const apiClient = await createApiClient(cookie);
 
     // 1. Get references to resolve names to IDs
     const [countries, cities, hotels] = await Promise.all([

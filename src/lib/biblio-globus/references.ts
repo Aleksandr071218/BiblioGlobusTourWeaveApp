@@ -24,7 +24,7 @@ export interface Hotel {
     cityKey: string;
 }
 
-type ApiClient = ReturnType<typeof createApiClient>;
+type ApiClient = Awaited<ReturnType<typeof createApiClient>>;
 
 const fetchData = async (apiClient: ApiClient, url: string, key?: string) => {
     const response = await apiClient(url, { next: { revalidate: 86400 } }); // Cache for 24 hours
@@ -35,22 +35,22 @@ const fetchData = async (apiClient: ApiClient, url: string, key?: string) => {
     return key ? data[key] : data;
 };
 
-export const getCountries = (apiClient: ApiClient): Promise<Country[]> => {
+export const getCountries = async (apiClient: ApiClient): Promise<Country[]> => {
     return fetchData(apiClient, 'http://export.bgoperator.ru/yandex?action=countries');
 };
 
-export const getCities = (apiClient: ApiClient): Promise<City[]> => {
+export const getCities = async (apiClient: ApiClient): Promise<City[]> => {
     return fetchData(apiClient, 'http://export.bgoperator.ru/auto/jsonResorts.json');
 };
 
-export const getHotels = (apiClient: ApiClient): Promise<Hotel[]> => {
+export const getHotels = async (apiClient: ApiClient): Promise<Hotel[]> => {
     return fetchData(apiClient, 'http://export.bgoperator.ru/yandex?action=hotelsJson');
 };
 
-export const getAccommodations = (apiClient: ApiClient) => {
+export const getAccommodations = async (apiClient: ApiClient) => {
     return fetchData(apiClient, 'http://export.bgoperator.ru/yandex?action=vr');
 };
 
-export const getMeals = (apiClient: ApiClient) => {
+export const getMeals = async (apiClient: ApiClient) => {
     return fetchData(apiClient, 'http://export.bgoperator.ru/yandex?action=boards');
 };

@@ -9,7 +9,7 @@ import type { BiblioGlobusCookie } from './auth';
  * @param cookie - The authentication cookie object.
  * @returns A fetch function pre-configured with necessary headers.
  */
-export function createApiClient(cookie: BiblioGlobusCookie) {
+export async function createApiClient(cookie: BiblioGlobusCookie) {
 
   const cookieString = `A1=${cookie.A1}; Z1=${cookie.Z1}; L=${cookie.L}`;
 
