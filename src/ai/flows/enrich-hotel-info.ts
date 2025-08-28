@@ -7,8 +7,13 @@
  * - EnrichHotelInfoInput - The input type for the enrichHotelInfo function.
  * - EnrichHotelInfoOutput - The return type for the enrichHotelInfo function.
  */
-
+ 
+import { createHash } from 'crypto';
 import {ai} from '@/ai/genkit';
+
+// In-memory cache for enriched hotel info
+const enrichCache = new Map<string, EnrichHotelInfoOutput>();
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 import {z} from 'genkit';
 import {Client, PlaceData, PlaceDetailsRequest, PlacePhoto, PlaceReview} from '@googlemaps/google-maps-services-js';
 
@@ -163,7 +168,26 @@ const enrichHotelInfoFlow = ai.defineFlow(
     outputSchema: EnrichHotelInfoOutputSchema,
   },
   async input => {
+    // Create a cache key based on the input
+    const cacheKey = createHash('sha256').update(JSON.stringify(input)).digest('hex');
+    
+    // Check if we have a valid cached result
+    const cachedEntry = enrichCache.get(cacheKey);
+    if (cachedEntry) {
+      const entryTimestamp = (cachedEntry as any).timestamp; // Add timestamp property to cache entry type if possible
+      if (entryTimestamp && (Date.now() - entryTimestamp) < CACHE_TTL) {
+        console.log('Returning cached enriched info for hotel:', input.hotelName);
+        return cachedEntry;
+      }
+    }
+
     const {output} = await prompt(input);
+    
+    // Save result to cache with timestamp
+    if (output) {
+      enrichCache.set(cacheKey, {...output, timestamp: Date.now()} as EnrichHotelInfoOutput);
+    }
+    
     return output!;
   }
 );

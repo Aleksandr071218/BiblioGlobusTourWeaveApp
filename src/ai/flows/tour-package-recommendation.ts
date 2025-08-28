@@ -30,7 +30,7 @@ const TourPackageSchema = z.object({
   returnDate: z.string().describe('The return date in YYYY-MM-DD format.'),
   imageUrl: z.string().describe('A placeholder image URL for the tour.'),
   tourId: z.string().describe('The original ID of the tour.'),
-  enrichedInfo: z.any().optional().describe('Enriched hotel information from Google Places.'),
+  enrichedInfo: EnrichHotelInfoOutputSchema.optional().describe('Enriched hotel information from Google Places.'),
 });
 
 const RecommendTourPackagesOutputSchema = z.object({

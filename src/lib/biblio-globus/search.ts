@@ -1,11 +1,21 @@
 'use server';
 
+import { createHash } from 'crypto';
 import { authenticate } from './auth';
 import { createApiClient } from './client';
 import type { SearchCriteria } from '@/components/tour/search-form';
 import type { Tour } from '@/types';
 import { getCountries, getCities, getHotels } from './references';
 import { format } from 'date-fns';
+
+// In-memory cache for search results
+const searchCache = new Map<string, Tour[]>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+interface CacheEntry {
+  data: Tour[];
+  timestamp: number;
+}
 
 // Interfaces for Biblio-Globus API responses
 interface PriceListEntry {
@@ -35,6 +45,16 @@ interface TourEntry {
  * @returns A promise that resolves to an array of tours.
  */
 export async function searchTours(criteria: SearchCriteria): Promise<Tour[]> {
+  // Create a cache key based on the search criteria
+  const cacheKey = createHash('sha256').update(JSON.stringify(criteria)).digest('hex');
+  
+  // Check if we have a valid cached result
+  const cachedEntry = searchCache.get(cacheKey);
+  if (cachedEntry && (Date.now() - cachedEntry.timestamp) < CACHE_TTL) {
+    console.log('Returning cached tour search results for criteria:', criteria);
+    return cachedEntry.data;
+  }
+
   console.log('Starting real tour search with criteria:', criteria);
 
   try {
@@ -143,7 +163,26 @@ export async function searchTours(criteria: SearchCriteria): Promise<Tour[]> {
     }
     
     // Limit results to avoid overwhelming the UI
-    return allFoundTours.slice(0, 25);
+    const results = allFoundTours.slice(0, 25);
+    
+    // Save results to cache
+    searchCache.set(cacheKey, {
+      data: results,
+      timestamp: Date.now()
+    });
+    
+    // Optional: Clean up old cache entries to prevent memory leaks
+    // This is a simple cleanup; in a production environment, you might want a more robust solution
+    if (searchCache.size > 100) { // Arbitrary limit
+      const now = Date.now();
+      for (const [key, entry] of searchCache.entries()) {
+        if ((now - entry.timestamp) >= CACHE_TTL) {
+          searchCache.delete(key);
+        }
+      }
+    }
+
+    return results;
 
   } catch (error) {
     console.error('An error occurred during tour search:', error);
