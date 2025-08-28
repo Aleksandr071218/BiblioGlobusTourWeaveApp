@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {Client, PlaceData, PlaceDetailsRequest, PlacePhoto} from '@googlemaps/google-maps-services-js';
 
 const EnrichHotelInfoInputSchema = z.object({
   hotelName: z.string().describe('The name of the hotel.'),
@@ -30,6 +31,24 @@ export async function enrichHotelInfo(input: EnrichHotelInfoInput): Promise<Enri
   return enrichHotelInfoFlow(input);
 }
 
+// Helper function to map amenities
+const mapAmenity = (type: string): string | null => {
+  const amenityMap: { [key: string]: string } = {
+    wifi: 'Free WiFi',
+    restaurant: 'Restaurant',
+    pool: 'Swimming pool',
+    spa: 'Spa',
+    gym: 'Gym',
+    bar: 'Bar',
+    parking: 'Parking',
+    room_service: 'Room Service',
+    airport_transfer: 'Airport Transfer',
+    laundry: 'Laundry',
+  };
+  return amenityMap[type] || null;
+};
+
+
 const getGooglePlacesInfo = ai.defineTool({
   name: 'getGooglePlacesInfo',
   description: 'Retrieves hotel information from Google Places API, including ratings, photos, and amenities.',
@@ -43,17 +62,74 @@ const getGooglePlacesInfo = ai.defineTool({
     amenities: z.array(z.string()).optional().describe('A list of amenities offered by the hotel.'),
   }).optional(),
 }, async (input) => {
-  // TODO: Implement the actual call to the Google Places API here.
-  // This is a placeholder implementation.
-  console.log('Calling Google Places API with:', input);
-  return {
-    rating: 4.5,
-    photos: [
-      'https://example.com/photo1.jpg',
-      'https://example.com/photo2.jpg',
-    ],
-    amenities: ['Free WiFi', 'Swimming pool', 'Restaurant'],
-  };
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) {
+    console.error('GOOGLE_PLACES_API_KEY environment variable not set.');
+    return { error: 'API key is not configured.' };
+  }
+
+  const client = new Client({});
+
+  try {
+    // 1. Find Place ID
+    const findPlaceResponse = await client.findPlaceFromText({
+      params: {
+        input: `${input.hotelName}, ${input.hotelAddress}`,
+        inputtype: 'textquery',
+        fields: ['place_id', 'name'],
+        key: apiKey,
+      },
+    });
+
+    if (findPlaceResponse.data.candidates.length === 0) {
+      console.warn(`No Google Places result found for: ${input.hotelName}`);
+      return undefined;
+    }
+
+    const placeId = findPlaceResponse.data.candidates[0].place_id;
+    if (!placeId) {
+      console.warn(`No Place ID found for: ${input.hotelName}`);
+      return undefined;
+    }
+
+    // 2. Get Place Details
+    const detailsRequest: PlaceDetailsRequest = {
+        params: {
+            place_id: placeId,
+            fields: ['rating', 'photos', 'types'],
+            key: apiKey,
+        }
+    }
+    const detailsResponse = await client.placeDetails(detailsRequest);
+    const placeData: Partial<PlaceData> = detailsResponse.data.result;
+
+    // 3. Format Photos
+    const photos = placeData.photos?.slice(0, 5).map((photo: PlacePhoto) => {
+        return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=${photo.photo_reference}&key=${apiKey}`;
+    }) || [];
+
+    // 4. Format Amenities
+    const amenities: string[] = [];
+    if (placeData.types) {
+        placeData.types.forEach(type => {
+            const mapped = mapAmenity(type);
+            if (mapped) amenities.push(mapped);
+        })
+    }
+    // Add some common defaults if none are found from types
+    if (amenities.length === 0) {
+        amenities.push('Free WiFi', 'Restaurant', 'Swimming pool');
+    }
+
+    return {
+      rating: placeData.rating,
+      photos: photos,
+      amenities: [...new Set(amenities)], // Remove duplicates
+    };
+  } catch (error: any) {
+    console.error('Error fetching data from Google Places API:', error.response?.data || error.message);
+    return { error: 'Failed to retrieve data from Google Places API.' };
+  }
 });
 
 const prompt = ai.definePrompt({
