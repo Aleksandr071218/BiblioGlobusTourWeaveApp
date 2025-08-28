@@ -10,7 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {Client, PlaceData, PlaceDetailsRequest, PlacePhoto} from '@googlemaps/google-maps-services-js';
+import {Client, PlaceData, PlaceDetailsRequest, PlacePhoto, PlaceReview} from '@googlemaps/google-maps-services-js';
 
 const EnrichHotelInfoInputSchema = z.object({
   hotelName: z.string().describe('The name of the hotel.'),
@@ -23,6 +23,7 @@ const EnrichHotelInfoOutputSchema = z.object({
     rating: z.number().optional().describe('The rating of the hotel from Google Places.'),
     photos: z.array(z.string()).optional().describe('URLs of photos of the hotel from Google Places.'),
     amenities: z.array(z.string()).optional().describe('A list of amenities offered by the hotel.'),
+    reviews: z.array(z.string()).optional().describe('A list of reviews for the hotel from Google Places.'),
   }).optional().describe('Hotel information from Google Places.'),
 });
 export type EnrichHotelInfoOutput = z.infer<typeof EnrichHotelInfoOutputSchema>;
@@ -60,6 +61,7 @@ const getGooglePlacesInfo = ai.defineTool({
     rating: z.number().optional().describe('The rating of the hotel from Google Places.'),
     photos: z.array(z.string()).optional().describe('URLs of photos of the hotel from Google Places.'),
     amenities: z.array(z.string()).optional().describe('A list of amenities offered by the hotel.'),
+    reviews: z.array(z.string()).optional().describe('A list of reviews for the hotel from Google Places.'),
   }).optional(),
 }, async (input) => {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
@@ -96,7 +98,7 @@ const getGooglePlacesInfo = ai.defineTool({
     const detailsRequest: PlaceDetailsRequest = {
         params: {
             place_id: placeId,
-            fields: ['rating', 'photos', 'types'],
+            fields: ['rating', 'photos', 'types', 'reviews'],
             key: apiKey,
         }
     }
@@ -120,11 +122,16 @@ const getGooglePlacesInfo = ai.defineTool({
     if (amenities.length === 0) {
         amenities.push('Free WiFi', 'Restaurant', 'Swimming pool');
     }
+    
+    // 5. Format Reviews
+    const reviews = placeData.reviews?.map((review: PlaceReview) => review.text).filter(text => text) || [];
+
 
     return {
       rating: placeData.rating,
       photos: photos,
       amenities: [...new Set(amenities)], // Remove duplicates
+      reviews: reviews,
     };
   } catch (error: any) {
     console.error('Error fetching data from Google Places API:', error.response?.data || error.message);

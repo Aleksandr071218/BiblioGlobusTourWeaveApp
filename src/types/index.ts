@@ -1,4 +1,5 @@
 import type {EnrichHotelInfoOutput} from "@/ai/flows/enrich-hotel-info";
+import type { SummarizeHotelReviewsOutput } from "@/ai/flows/summarize-hotel-reviews";
 
 export interface Hotel {
   name: string;
@@ -18,6 +19,9 @@ export interface Tour {
   imageHint: string;
 }
 
+export type ReviewSummary = SummarizeHotelReviewsOutput;
+
 export interface EnrichedTour extends Tour {
   enrichedHotelInfo?: EnrichHotelInfoOutput['googlePlacesInfo'];
+  reviewSummary?: ReviewSummary;
 }

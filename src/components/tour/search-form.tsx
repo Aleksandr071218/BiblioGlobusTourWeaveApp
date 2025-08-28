@@ -22,7 +22,7 @@ import {
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePickerWithRange } from '../ui/date-picker';
 import { Calendar, Users, Plane, Search, Star, Utensils } from 'lucide-react';
-import { DateRange } from 'react-day-picker';
+import type { DateRange } from 'react-day-picker';
 
 const searchSchema = z.object({
   country: z.string().min(1, 'Country is required'),
@@ -77,7 +77,7 @@ export function SearchForm({ onSearch, isSearching }: SearchFormProps) {
                 name="country"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2"><Plane size={16}/> Destination Country</FormLabel>
+                    <FormLabel className="flex items-center gap-2"><Plane size={16} /> Destination Country</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., Turkey, Egypt" {...field} />
                     </FormControl>
@@ -89,9 +89,9 @@ export function SearchForm({ onSearch, isSearching }: SearchFormProps) {
                 name="dates"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2"><Calendar size={16}/> Dates</FormLabel>
+                    <FormLabel className="flex items-center gap-2"><Calendar size={16} /> Dates</FormLabel>
                     <FormControl>
-                        <DatePickerWithRange date={field.value} onDateChange={field.onChange} />
+                      <DatePickerWithRange date={field.value} onDateChange={field.onChange} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -101,9 +101,9 @@ export function SearchForm({ onSearch, isSearching }: SearchFormProps) {
                 name="travelers"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2"><Users size={16}/> Travelers</FormLabel>
+                    <FormLabel className="flex items-center gap-2"><Users size={16} /> Travelers</FormLabel>
                     <FormControl>
-                        <Input type="number" min="1" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))}/>
+                      <Input type="number" min="1" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -113,7 +113,7 @@ export function SearchForm({ onSearch, isSearching }: SearchFormProps) {
                 name="stars"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2"><Star size={16}/> Hotel Stars</FormLabel>
+                    <FormLabel className="flex items-center gap-2"><Star size={16} /> Hotel Stars</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -130,18 +130,18 @@ export function SearchForm({ onSearch, isSearching }: SearchFormProps) {
                     </Select>
                   </FormItem>
                 )}
-                />
+              />
               <FormField
                 control={form.control}
                 name="mealType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2"><Utensils size={16}/> Meal Type</FormLabel>
+                    <FormLabel className="flex items-center gap-2"><Utensils size={16} /> Meal Type</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Any" />
-                        </Trigger>
+                        </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="">Any</SelectItem>
@@ -155,7 +155,7 @@ export function SearchForm({ onSearch, isSearching }: SearchFormProps) {
                     </Select>
                   </FormItem>
                 )}
-                />
+              />
             </div>
           </CardContent>
           <CardFooter>

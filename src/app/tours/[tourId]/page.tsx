@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation';
 import { getTourById } from '@/lib/data';
 import { enrichHotelInfo } from '@/ai/flows/enrich-hotel-info';
-import type { EnrichedTour } from '@/types';
+import { summarizeHotelReviews } from '@/ai/flows/summarize-hotel-reviews';
+import type { EnrichedTour, ReviewSummary } from '@/types';
 import { HotelInfo } from '@/components/tour/hotel-info';
+import { HotelReviewsSummary } from '@/components/tour/hotel-reviews-summary';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Calendar, MapPin, DollarSign, Star, BedDouble } from 'lucide-react';
@@ -18,11 +20,20 @@ export default async function TourDetailPage({ params }: { params: { tourId: str
   }
 
   // Enrich hotel info using GenAI flow
-  // NOTE: In a real app, this result would also be cached in Firestore
   const enrichedHotelInfoData = await enrichHotelInfo({
     hotelName: tour.hotel.name,
     hotelAddress: tour.hotel.address,
   });
+
+  let reviewSummary: ReviewSummary | undefined = undefined;
+  if (enrichedHotelInfoData.googlePlacesInfo?.reviews && enrichedHotelInfoData.googlePlacesInfo.reviews.length > 0) {
+    // Summarize reviews using another GenAI flow
+    const summaryData = await summarizeHotelReviews({
+      hotelName: tour.hotel.name,
+      hotelReviews: enrichedHotelInfoData.googlePlacesInfo.reviews,
+    });
+    reviewSummary = { summary: summaryData.summary };
+  }
   
   // The GenAI flow returns placeholder image URLs. We replace them here for display.
   if (enrichedHotelInfoData.googlePlacesInfo?.photos) {
@@ -34,6 +45,7 @@ export default async function TourDetailPage({ params }: { params: { tourId: str
   const enrichedTour: EnrichedTour = {
     ...tour,
     enrichedHotelInfo: enrichedHotelInfoData.googlePlacesInfo,
+    reviewSummary,
   };
 
   return (
@@ -58,6 +70,8 @@ export default async function TourDetailPage({ params }: { params: { tourId: str
                 </div>
 
                 <HotelInfo data={enrichedTour.enrichedHotelInfo} />
+                <HotelReviewsSummary data={enrichedTour.reviewSummary} />
+
 
             </div>
             <div className="md:col-span-1 space-y-6">
