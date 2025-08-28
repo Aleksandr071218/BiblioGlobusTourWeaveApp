@@ -1,0 +1,969 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!-- saved from url=(0049)https://export.bgoperator.ru/load-xml-prices.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><!-- saved from url=(0054)http://export.bgoperator.ru/texts/load-xml-prices.html -->
+
+
+    <title>Инструкция по выгрузке цен туроператора Библио-Глобус в формате JSON</title><style>
+        body,h1,h2,table {font-family:Verdana;font-size:12px;}
+        h1 {font-size:20px;color:#003366;font-weight:bolder;}
+        h2 {font-size:16px;color:#003399;font-weight:bolder;}
+        tt {color:#003399;}
+        tt .attr {color:#006633;}
+        tt .val {color:#663300;}
+        a {color:#3333cc;}
+        table {border:1px solid #ccc;border-collapse:collapse;}
+        td {vertical-align:top;border:1px solid #ccc;padding:4px 10px;}
+        ul li {list-style-type:none;}
+    </style>
+    <style type="text/css"></style><style type="text/css"></style></head>
+<body>
+
+<h1 align="center">Выгрузка цен туристического оператора «Библио-Глобус» в формате JSON</h1>
+<ul><b>Выгрузка цен производится в несколько этапов:</b>
+    <li>1. <a href="https://export.bgoperator.ru/load-xml-prices.html#auth">Доступ к API</a></li>
+    <ul><li>1.1 <a href="https://export.bgoperator.ru/load-xml-prices.html#login">Получение логина и пароля для доступа к системе туроператора</a></li></ul>
+    <ul><li>1.2 <a href="https://export.bgoperator.ru/load-xml-prices.html#auth_work">Авторизация при работе с сервисами</a></li></ul>
+    <ul><li>1.3 <a href="https://export.bgoperator.ru/load-xml-prices.html#compress">Сжатие данных</a></li></ul>
+    <li>2. <a href="https://export.bgoperator.ru/load-xml-prices.html#reference">Выгрузка и синхронизация справочников</a></li>
+    <ul><li>2.1. <a href="https://export.bgoperator.ru/load-xml-prices.html#kurs">Выгрузка курсов валют к рублю</a></li></ul>
+    <li>3. <a href="https://export.bgoperator.ru/load-xml-prices.html#price_list_main">Выгрузка списка прайс-листов, доступных для загрузки в формате JSON</a></li>
+    <ul><li>3.1. <a href="https://export.bgoperator.ru/load-xml-prices.html#price_list">Выгрузка списка прайс-листов</a></li></ul>
+    <ul><li>3.2. <a href="https://export.bgoperator.ru/load-xml-prices.html#price_resorts">Выгрузка соответствия прайс-листов и курортов(городов)</a></li></ul>
+    <ul><li>3.3. <a href="https://export.bgoperator.ru/load-xml-prices.html#flt_flt2">Выгрузка списка городов вылета и стран туров</a></li></ul>
+    <ul><li>3.4. <a href="https://export.bgoperator.ru/load-xml-prices.html#stops">Выгрузка стопов на проживание и перелеты</a></li></ul>
+    <li>4. <a href="https://export.bgoperator.ru/load-xml-prices.html#load_price">Выгрузка выбранных цен туроператора</a>
+        <ul><li>4.1. <a href="https://export.bgoperator.ru/load-xml-prices.html#filter">Расширение параметров и фильтрация выгружаемых цен</a></li></ul>
+        <ul><li>4.2. <a href="https://export.bgoperator.ru/load-xml-prices.html#extended">Расширенная информация по прайс-листу</a></li></ul>
+        <ul><li>4.2.1 <a href="https://export.bgoperator.ru/load-xml-prices.html#flights">Информация по перелетам</a></li></ul>
+        <ul><li>4.2.2 <a href="https://export.bgoperator.ru/load-xml-prices.html#transfer">Информация по трансферам</a></li></ul>
+        <ul><li>4.2.3 <a href="https://export.bgoperator.ru/load-xml-prices.html#dop">Информация по экскурсиям и доп. услугам</a></li></ul>
+
+    </li>
+    <li>5. <a href="https://export.bgoperator.ru/load-xml-prices.html#min_prices">Выгрузка горящих спецпредложений туроператора</a></li>
+    <li>6. <a href="https://export.bgoperator.ru/load-xml-prices.html#spo">Выгрузка спецпредложений с мгновенным подтверждением</a></li>
+    <li>7. <a href="https://export.bgoperator.ru/load-xml-prices.html#blockavia">Поисковый запрос цен на чартерные авиаперелеты</a></li>
+    <li>8. <a href="https://export.bgoperator.ru/load-xml-prices.html#avia">Поисковый запрос цен на регулярные авиаперелеты</a></li>
+</ul>
+
+
+<a name="auth"></a><h2 align="center">1. Доступ к API</h2>
+<a name="login"></a><h2 align="center">1.1. Получение логина и пароля</h2>
+<p>Если у вас нет логина и пароля для доступа к системе туристического
+    оператора Библио-Глобус, вам необходимо связаться с нашими сотрудниками,
+    отвечающими за работу с агентствами по телефону:<br>
+    <b>+7(495)109-2500</b><br>
+    Любимов Александр — доб. 1448<br>
+</p>
+<a name="auth_work"></a><h2 align="center">1.2. Авторизация при работе с API Библио-Глобус</h2>
+<p> Авторизация устроена следующим образом: если при очередном запросе API выдает ошибку <b>401</b>, то нужно получить свежие значения COOKIE с именами <b>A1</b>, <b>Z1</b> и <b>L</b>, отправив <b>POST</b>-запрос к <b>https://login.bgoperator.ru/auth</b> с <b>POST</b>-параметрами <b>login</b> и <b>pwd</b>.
+    Значения COOKIE <b>A1</b>, <b>Z1</b> и <b>L</b> необходимо передавать дальше в запросы к сервисам. При этом COOKIE с именем <b>Z1</b> будет меняться при каждом запросе к сервисам - его нужно принимать и передавать в следующий запрос.<br>
+</p>
+<a name="compress"></a><h2 align="center">1.3. Сжатие данных</h2>
+<p> Во все запросы необходимо добавлять заголовок Accept-Encoding: gzip. Без него в ответе будет возвращаться статус 406.</p>
+
+
+<a name="reference"></a><h2 align="center">2. Выгрузка и синхронизация справочников</h2>
+<p>Для выгрузки цен, а так же дополнительной фильтрации и расширения
+    параметров выгрузки вам необходимо загрузить справочники стран, городов,
+    отелей и вариантов размещения.</p>
+<p><b>Для выгрузки справочников необходимо сделать следующие запросы:</b><br>
+<table>
+    <tbody><tr><td><a href="http://export.bgoperator.ru/yandex?action=countries" target="_blank">http://export.bgoperator.ru/yandex?action=countries</a></td><td>Справочник стран</td></tr>
+    <tr><td><a href="http://export.bgoperator.ru/auto/jsonResorts.json" target="_blank">http://export.bgoperator.ru/auto/jsonResorts.json</a></td><td>Справочник городов</td></tr>
+    <tr><td><a href="http://export.bgoperator.ru/yandex?action=hotelsJson" target="_blank">http://export.bgoperator.ru/yandex?action=hotelsJson</a></td><td>Справочник отелей. Если в запрос добавить параметр <b>id</b>, то информация вернётся только по отелю с указанным <b>id</b></td></tr>
+    <tr><td><a href="http://export.bgoperator.ru/yandex?action=vr" target="_blank">http://export.bgoperator.ru/yandex?action=vr</a></td><td>Справочник вариантов размещения в номере</td></tr>
+    <tr><td><a href="http://export.bgoperator.ru/yandex?action=boards" target="_blank">http://export.bgoperator.ru/yandex?action=boards</a></td><td>Справочник типов питания</td></tr>
+    </tbody></table>
+</p>
+<p>
+    <b>Формат ответа (для справочников стран, городов, вариантов размещения в номере и типов питания):</b><br>
+    <tt>
+        &nbsp;&nbsp;[<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"id"</span>:<span class="attr">"100410000051"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"title_ru"</span>:<span class="attr">"Таиланд"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"title_en"</span>:<span class="attr">"Thailand"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"code"</span>:<span class="attr">"TH"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"town_from"</span>:<span class="attr">"100510000826#100510397223#100510015827#100510397359#100510397310#100574750001#100510345651#100510324872#100510306889#100510345650#100510397233#100510521482#100510834134#100510001075#100510520127#100510519973#100510397287#100510000892#100510397251#100510000863#100510397178#100568421754#100510397261#100510397299#100510397348"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"alpha3"</span>:<span class="attr">"THA"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"tours"</span>:<span class="attr">"Да"</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;},<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;...<br>
+        &nbsp;&nbsp;]<br>
+    </tt>
+</p>
+<p>
+    <tt>id</tt> — идентификатор объекта в системе<br>
+</p>
+<p>
+    <b>Атрибуты для загрузки:</b>
+<table>
+    <tbody><tr><td>Страны</td><td>title_ru – русское название страны<br>
+        title_en – английское название страны<br>
+        code – код страны<br>
+        town_from - список идентификаторов городов вылета в данной стране (разделены <tt>#</tt>)<br>
+        alpha3 - трехбуквенный код страны<br>
+        tours - признак того, что в данную страну есть туры (в этом случае атрибут равен <tt>Да</tt>)<br>
+        site_cur - валюта страны на сайте Библио-Глобус</td></tr>
+    <tr><td>Города</td><td>title_ru – русское название города<br>
+        title_en – английское название города<br>
+        country – id страны города<br>
+        airports – данный атрибут передается в случае, когда в городе есть аэропорт <br>
+        ap_name – английское название аэропорта<br>
+        code – iata код аэропорта</td></tr>
+    <tr><td>Варианты размещения</td><td>name – название варианта размещения<br>
+        name_full – расшифрованное название варианта размещения<br>
+        AD_number – количество взрослых<br>
+        CHD_number – количество детей<br>
+        infnum – количество младенцев</td></tr>
+    <tr><td>Типы питания</td><td>name – название типа питания<br>
+        name_full – расшифрованное название типа питания<br></td></tr>
+    </tbody></table>
+</p>
+<p>
+    <b>Формат ответа (для справочника отелей):</b><br>
+    <tt>
+        [<br>
+        &nbsp;&nbsp;{<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;"key" : <span class="attr">"102631286815"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;"name" : <span class="attr">"HOLIDAY INN DUBAI AL BARSHA"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;"stars" : <span class="attr">"4"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;"countryKey" : <span class="attr">"100410510097"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;"cityKey" : <span class="attr">"100510535941"</span><br>
+        &nbsp;&nbsp;},<br>
+        &nbsp;&nbsp;...<br>
+        ]
+    </tt>
+</p>
+<p>
+    <tt>key</tt> — идентификатор объекта отеля<br>
+    <tt>name</tt> — название отеля<br>
+    <tt>stars</tt> — звездность отеля<br>
+    <tt>countryKey</tt> — идентификатор страны отеля<br>
+    <tt>cityKey</tt> — идентификатор города отеля<br>
+    <tt>inPr</tt> - признак того, что по отелю есть действующие цены (значение <tt>0</tt> - нет, <tt>1</tt> - да). Данный атрибут выгружается только при добавлении в вызов GET-параметра <tt>&amp;id=&lt;id отеля&gt;</tt>.
+    <br>Если <tt>id</tt> не передается, то возвращаются только те отели, у которых <tt>inPr</tt> равен <tt>1</tt>.
+</p>
+
+<a name="kurs"></a><h2 align="center">2.1. Выгрузка курсов валют</h2>
+<p><b>Для выгрузки курсов валют, необходимо выполнить один из следующих запросов:</b><br>
+<table>
+    <tbody>
+    <tr><td><a href="http://export.bgoperator.ru/auto/auto-kurs.xml" target="_blank">http://export.bgoperator.ru/auto/auto-kurs.xml</a></td><td>Выгрузка в формате XML</td></tr>
+    <tr><td><a href="http://export.bgoperator.ru/auto/auto-kurs.json" target="_blank">http://export.bgoperator.ru/auto/auto-kurs.json</a></td><td>Выгрузка в формате JSON</td></tr>
+    </tbody>
+</table>
+</p>
+<b>Ответ в формате XML:</b><br>
+<tt>
+    &lt;currencies&gt;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&lt;date&gt;20.01.2020&lt;/date&gt;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&lt;rate code=<span class="attr">"EUR"</span> value=<span class="attr">"46.81"</span> /&gt;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&lt;rate code=<span class="attr">"USD"</span> value=<span class="attr">"34.54"</span> /&gt;<br>
+    &nbsp;&nbsp;&lt;BYR&gt;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&lt;rate code=<span class="attr">"EUR"</span> value=<span class="attr">"13958"</span>/&gt;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&lt;rate code=<span class="attr">"USD"</span> value=<span class="attr">"10231"</span>/&gt;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&lt;rate code=<span class="attr">"RUR"</span> value=<span class="attr">"285"</span>/&gt;<br>
+    &nbsp;&nbsp;&lt;/BYR&gt;<br>
+    &nbsp;&nbsp;&lt;UAH&gt;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&lt;rate code=<span class="attr">"EUR"</span> value=<span class="attr">"16.52"</span>/&gt;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&lt;rate code=<span class="attr">"USD"</span> value=<span class="attr">"12.18"</span>/&gt;<br>
+    &nbsp;&nbsp;&lt;/UAH&gt;<br>
+    &lt;/currencies&gt;<br>
+</tt>
+Элементы внутри тэгов <tt>&lt;BYR&gt;</tt> и <tt>&lt;UAH&gt;</tt> содержат курсы к белорусскому рублю и украинской гривне соответственно. Элементы вне указанных тэгов содержат курсы валют к рублю.
+<br><br>
+<b>Ответ в формате JSON:</b><br>
+<tt>
+    {<br>
+    &nbsp;&nbsp;"currencies" : {<br>
+    &nbsp;&nbsp;"date" : "20.01.2020",<br>
+    &nbsp;&nbsp;"RUR" :  [<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"code" : "EUR",<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"value" : "46.81"<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;},<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"code" : "USD",<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"value" : "34.54"<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+    &nbsp;&nbsp;],<br>
+    &nbsp;&nbsp;"BYN" :  [<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"code" : "EUR",<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"value" : "13958"<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;},  <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"code" : "USD",<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"value" : "10231"<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;},  <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"code" : "RUR",<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"value" : "285"<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+    &nbsp;&nbsp;],<br>
+    &nbsp;&nbsp;"UAH" :  [<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"code" : "EUR",<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"value" : "16.52"<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;},<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"code" : "USD",<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"value" : "12.18"<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+    &nbsp;&nbsp;]<br>
+    }}<br>
+</tt>
+
+<a name="price_list_main"></a><h2 align="center">3. Выгрузка списка прайс-листов, доступных для загрузки в формате JSON</h2>
+<a name="price_list"></a><h2 align="center">3.1. Выгрузка списка прайс-листов</h2>
+<p>Общий список цен на туры Библио-Глобус поделен на прайс-листы.
+    Каждый прайс-лист характеризуется маршрутом, городом вылета, списком
+    доступных длительностей туров и датой вылета. В JSON может быть выгружен
+    список прайс-листов с фиксированным направлением (страной) и городом
+    вылета.</p>
+<p><b>Пример:</b><br>
+    <a href="http://export.bgoperator.ru/yandex?action=files&amp;flt=100410000049&amp;flt2=100510000863&amp;xml=11" target="_blank">http://export.bgoperator.ru/yandex?action=files&amp;flt=100410000049&amp;flt2=100510000863&amp;xml=11</a><br>
+    где 100410000049 — идентификатор страны Кипр из справочника стран<br>
+    100510000863 — идентификатор города Москва из справочника городов<br>
+</p>
+
+<p>
+    <b>Формат ответа JSON:</b><br>
+    <tt>
+        {<br>
+        &nbsp;&nbsp;<span class="attr">"entries"</span>:[<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"date"</span>:<span class="attr">"23.08.2014"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"route"</span>:<span class="attr">"Туры на Кипр &lt;b&gt;Трансаэро (аэропорт Пафос \/ Ларнака)&lt;\b&gt;"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"duration"</span>:<span class="attr">"/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27/28"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"url"</span>:<span class="attr">"http://export.bgoperator.ru/partners?action=price&amp;tid=211&amp;flt=100410000049&amp;flt2=100510000863&amp;id_price=121132934133&amp;data=23.08.2014&amp;xml=11"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"id_price"</span>:<span class="attr">"121132934133"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"minprice"</span>:<span class="attr">"281"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"minindex"</span>:<span class="attr">"1.35"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"imp"</span>:<span class="attr">"1"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"cur"</span>:<span class="attr">"EUR"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"rc"</span>:<span class="attr">"1"</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;},<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;...<br>
+        &nbsp;&nbsp;]<br>
+        }
+    </tt>
+</p>
+<p>
+    <tt>date</tt> — дата вылета<br>
+    <tt>route</tt> — маршрут прайс-листа и авиакомпания<br>
+    <tt>duration</tt> — длительности туров в прайс-листе<br>
+    <tt>url</tt> — ссылка на прайс-лист в формате JSON для загрузки<br>
+    <tt>stop</tt> — наличие этого элемента означает, тур находится в <a href="http://export.bgoperator.ru/texts/load-xml-prices.html#stops">стоп-листе</a>.
+    <tt>minprice</tt> — минимальная ненулевая цена из прайс-листа за одного человека с вариантом размещения <tt><span class="val">"2 взрослых"</span></tt>(<tt><span class="val">"2 AD"</span></tt>)<br>
+    <tt>minindex</tt> — отношение <tt>min_price</tt> текущего прайс-листа к наименьшей <tt>min_price</tt> из всех прайс-листов выгружаемого списка<br>
+    <tt>cur</tt> — валюта прайс-листа<br>
+    <tt>imp</tt> — флаг (<tt><span class="val">1</span></tt>/<tt><span class="val">0</span></tt>); значением <tt><span class="val">1</span></tt> помечены приоритетные прайс-листы Библио-Глобус<br>
+    <tt>rc</tt> — флаг (<tt><span class="val">1</span></tt>/<tt><span class="val">0</span></tt>); значением <tt><span class="val">1</span></tt> помечены регулярные классы<br>
+</p>
+
+<a name="price_resorts"></a><h2 align="center">3.2. Выгрузка соответствия прайс-листов и курортов (городов)</h2>
+<p>
+    Ссылку на прайс-лист можно формировать самостоятельно.
+    Пример ссылки: <a href="http://export.bgoperator.ru/partners?action=price&amp;tid=211&amp;flt=100410000049&amp;flt2=100510000863&amp;id_price=121120015746&amp;data=10.03.2011&amp;xml=11" target="_blank">http://export.bgoperator.ru/partners?action=price&amp;tid=211&amp;flt=100410000049&amp;flt2=100510000863&amp;id_price=121120015746&amp;data=10.03.2011&amp;xml=11</a>.<br>
+    Ссылка содержит параметр <b>id_price</b> - прайс-лист. Для получения соответствия курортов и <b>id_price</b> необходимо выполнить следующий запрос:<br>
+    <a href="http://export.bgoperator.ru/yandex?action=jsonpriceresorts&amp;data=10.10.2014&amp;flt2=100510000863">http://export.bgoperator.ru/yandex?action=jsonpriceresorts&amp;data=10.10.2014&amp;flt2=100510000863</a>.<br>
+    Обязательные параметры: <b>data</b> - указывает дату, на которую действует соответствие, <b>flt2</b> - город вылета.<br>
+    Предлагается следующая процедура работы с этим сервисом.
+</p><ol>
+    <li>Для каждого города вылета и даты вылета кэшировать соответствие курортов и прайс-листов:
+        <a href="http://export.bgoperator.ru/yandex?action=jsonpriceresorts&amp;data=10.10.2014&amp;flt2=100510000863">http://export.bgoperator.ru/yandex?action=jsonpriceresorts&amp;data=10.10.2014&amp;flt2=100510000863</a>.<br></li>
+    <li>Для того, чтобы найти прайс-листы, соответствующие отелю, необходимо по справочнику определить город отеля и по городу отеля определить прайс-листы (из кэша или запросом, если соответствие еще не закэшировано).</li>
+    <li>Кэш необходимо очищать каждый день.</li>
+</ol>
+
+
+
+<p></p>
+<p>
+    <b>Формат ответа (JSON):</b>
+    <tt>
+    </tt></p><tt>
+</tt><p><tt>
+    {<span class="attr">"id_price"</span>:[<br>
+    &nbsp;{<span class="attr">"id"</span>:<span class="attr">"121174225779"</span>, <span class="attr">"imp"</span>:<span class="attr">"Нет"</span>, <span class="attr">"res"</span>: [<span class="attr">"100574180976"</span>]},<br>
+    &nbsp;{<span class="attr">"id"</span>:<span class="attr">"121174217697"</span>, <span class="attr">"imp"</span>:<span class="attr">"Нет"</span>, <span class="attr">"res"</span>: [<span class="attr">"100574180976"</span>]},<br>
+    ]}<br>
+
+</tt>
+</p><p>
+    <tt>id</tt> — идентификатор прайс-листа<br>
+    <tt>imp</tt> — флаг (<tt><span class="val">Да</span></tt>/<tt><span class="val">Нет</span></tt>); зачением <tt><span class="val">Да</span></tt> помечены приоритетные прайс-листы Библио-Глобус<br>
+    <tt>res</tt> — массив идентификаторов курортов, которые есть в данном прайс-листе<br>
+    <tt>t</tt> — описание прайс-листа (отображается, если в запросе указан параметр <b>&amp;title=1</b>)<br>
+    <tt>a</tt> — авиакомпания прайс-листа (отображается, если в запросе указан параметр <b>&amp;title=1</b>)<br>
+</p>
+<a name="flt_flt2"></a><h2 align="center">3.3. Выгрузка списка городов вылета и стран туров</h2>
+<p>
+    Список возможных городов вылета и стран с турами можно получить по ссылке: <a href="http://export.bgoperator.ru/auto/homepage-124331253701.js" target="_blank">http://export.bgoperator.ru/auto/homepage-124331253701.js</a>.<br>
+    В файле переменная <tt>BG_FLTX</tt> инициализируется объектом, внутри которого находится информация о городах вылета (поле <tt>flt2</tt>) и странах туров (поле <tt>flt</tt>).
+    <br>
+</p>
+<p>
+    <b>Поле flt.</b>
+        Представляет из себя массив элементов вида <tt>[<span class="attr">100420695633</span>, {<span class="attr">"n"</span>:<span class="attr">"Абхазия"</span>}]</tt>, где
+        <tt><span class="attr">100420695633</span></tt> - <tt><span class="attr">id</span></tt> страны <tt><span class="attr">"Абхазия"</span></tt>.
+    </p>
+    <p>
+    <b>Поле flt2.</b>
+        Содержит информацию о том, из каких городов вылета в какие страны есть туры.<br>
+        Представляет из себя массив элементов вида
+
+        <tt>
+        [<span class="attr">100510000863</span>, {<span class="attr">"n":Москва", "f" : 0, "t" : [1,3,1,...,1,1]</span>}]</tt>, где <tt><span class="attr">100510000863</span></tt> - <tt><span class="attr">id</span></tt> города <tt><span class="attr">"Москва"</span></tt>. <br>
+        Поле <tt>t</tt> содержит массив индикаторов (равный по размеру массиву <tt>flt</tt>). Индекс элемента (индикатора) в массиве <tt>t</tt> равен индексу страны в массиве <tt>flt</tt>. <br>
+        Если индикатор равен <tt>1</tt>, то из текущего города в текущую страну есть только туры без транспорта, иначе - с транспортом (авиа, ж/д и т.п.).
+    </p>
+<a name="stops"></a><h2 align="center">3.4. Выгрузка стопов на проживание и перелеты</h2>
+<p>Для выгрузки информации по стоп-сейлам на проживание и перелеты, необходимо выполнить следующие запросы:</p>
+<table>
+    <tbody><tr><td><a href="http://export.bgoperator.ru/yandex?action=flights_stops" target="_blank">http://export.bgoperator.ru/yandex?action=flights_stops</a></td><td>Информация по стопам на перелеты в формате xml</td></tr>
+    <tr><td><a href="http://export.bgoperator.ru/yandex?action=flights_stops&amp;json=true" target="_blank">http://export.bgoperator.ru/yandex?action=flights_stops&amp;json=true</a></td><td>Информация по стопам на перелеты в формате json</td></tr>
+    <tr><td><a href="http://export.bgoperator.ru/yandex?action=hotels_stops" target="_blank">http://export.bgoperator.ru/yandex?action=hotels_stops</a></td><td>Информация по стопам на проживание в формате xml</td></tr>
+    <tr><td><a href="http://export.bgoperator.ru/yandex?action=hotels_stops&amp;json=true" target="_blank">http://export.bgoperator.ru/yandex?action=hotels_stops&amp;json=true</a></td><td>Информация по стопам на проживание в формате json</td></tr>
+    </tbody></table>
+<p>
+    <b>Формат ответа на запрос стопов на перелеты:</b><br>
+    <tt>
+        &lt;stopsales&gt;<br>
+        &nbsp;&nbsp;&lt;item flight=<span class="attr">"103119663447"</span> date=<span class="attr">"2013-10-05"</span> class=<span class="attr">"E"</span> nights=<span class="attr">"9"</span>/&gt;<br>
+        &nbsp;&nbsp;&lt;item flight=<span class="attr">"103119663447"</span> date=<span class="attr">"2013-10-05"</span> class=<span class="attr">"E"</span> nights=<span class="attr">"6"</span>/&gt;<br>
+        &nbsp;&nbsp;&lt;item flight=<span class="attr">"103119663447"</span> date=<span class="attr">"2013-10-05"</span> class=<span class="attr">"E"</span> nights=<span class="attr">"5"</span>/&gt;<br>
+        &nbsp;&nbsp;…<br>
+        &lt;/stopsales&gt;
+    </tt>
+</p>
+<p>
+    <tt>flight</tt> — идентификатор авиаперелёта в системе Библио-Глобус<br>
+    <tt>date</tt> — дата вылета<br>
+    <tt>class</tt> — класс авиаперелёта<br>
+    <tt>nights</tt> — количество ночей<br>
+    если атрибут <tt>nights</tt> не заполнен - это означает, что уставновлен stop-sale на вылет на указанную дату;<br>
+    если атрибут <tt>nights</tt>
+    заполнен - это означает, что для данного вылета на указанное количество
+    ночей установлен stop-sale на возврат (обратный перелет)
+</p>
+<p>
+    <b>Формат ответа на запрос стопов на проживание:</b><br>
+    <tt>
+        &lt;stopsales&gt;<br>
+        &nbsp;&nbsp;&lt;item hotel=<span class="attr">"102640059661"</span> datebeg=<span class="attr">"2013-10-06"</span> dateend=<span class="attr">"2013-10-25"</span> ns=<span class="attr">"104630536730"</span>/&gt;<br>
+        &nbsp;&nbsp;&lt;item hotel=<span class="attr">"102640059661"</span> datebeg=<span class="attr">"2013-10-06"</span> dateend=<span class="attr">"2013-10-25"</span> ns=<span class="attr">"104640059686"</span>/&gt;<br>
+        &nbsp;&nbsp;&lt;item hotel=<span class="attr">"102630316562"</span> datebeg=<span class="attr">"2013-12-29"</span> dateend=<span class="attr">"2014-01-02"</span>/&gt;<br>
+        &nbsp;&nbsp;…<br>
+        &lt;/stopsales&gt;
+    </tt>
+</p>
+<p>
+    Стоп на проживание означает остановку продажи тех туров в отель <tt>hotel</tt>, у которых период пересекается с интервалом с <tt>datebeg</tt> по <tt>dateend</tt> (включительно). Если указан атрибут <tt>ns</tt>, то остановка продаж действует только на типы номеров <tt>ns</tt> (название номера, тип питания, вид из окна).<br>
+    <br>
+    <tt>hotel</tt> — идентификатор отеля в системе Библио-Глобус<br>
+    <tt>datebeg</tt> — дата начала периода стопа<br>
+    <tt>dateend</tt> — дата окончания периода стопа<br>
+    <tt>ns</tt> - идентификатор типа номера (название номера, тип питания, вид из окна)
+</p>
+<a name="load_price"></a><h2 align="center">4. Выгрузка прайс-листа в формате JSON</h2>
+<p>Для выгрузки прайс-листа в формате JSON необходимо обратиться по ссылке, полученной из параметра <tt>url</tt> выгрузки списка <a href="http://export.bgoperator.ru/texts/load-xml-prices.html#price_list">прайс-листов</a>.</p>
+<p>
+    Если в данной ссылке параметр &amp;xml=11 заменить на &amp;xml=21, то
+    вместе с прайс-листом будут выданы параметры <a href="http://export.bgoperator.ru/texts/load-xml-prices.html#filter">фильтров</a> и <a href="http://export.bgoperator.ru/texts/load-xml-prices.html#extended">дополнительная информация</a>. Если будет
+    добавлен параметр &amp;entr=-1, то в результатах будет только содержимое
+    фильтров.<br>
+    <b>Формат ответа:</b><br>
+    <tt>
+        {<br>
+        &nbsp;&nbsp;<span class="attr">"href0"</span>: <span class="attr">"http://export.bgoperator.ru/tozaya?prx=104499999900000025&amp;idt=&amp;cntr=100410000049&amp;repl=0&amp;ins=0-30000-EUR"</span>,<br>
+        &nbsp;&nbsp;<span class="attr">"cur"</span>: <span class="attr">"EUR"</span>,<br>
+        &nbsp;&nbsp;<span class="attr">"prx"</span>: <span class="attr">"104499999900000025"</span>,<br>
+        &nbsp;&nbsp;<span class="attr">"entries"</span>: [<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"tour_date"</span>: <span class="attr">"27.07.2014"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"aircompany"</span>: <span class="attr">"Аэрофлот"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"town"</span>: <span class="attr">"Ayia Napa"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"room"</span>: <span class="attr">"STANDARD Inland View HB"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"dt"</span>: <span class="attr">"27.07.2014"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"href1"</span>: <span class="attr">"&amp;templ=121120516103&amp;otn=104610790295&amp;dt=27.07.2014&amp;kol=2&amp;sr=43UpM9e04HAuj08YLk204HAu+08YLkN-CF8yGA&amp;c=YY00000000"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"id_hotel"</span>: <span class="attr">"102610001486"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"id_ns"</span>: <span class="attr">"104610790295"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"duration"</span>: <span class="attr">"2"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"o_duration"</span>: <span class="attr">"2"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"quota"</span>: <span class="attr">"9"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"id_price"</span>: <span class="attr">"121120516103"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"sr"</span>: <span class="attr">"43UpM9e04HAuj08YLk204HAu+08YLkN-CF8yGAj2d1f78aeef81c9d7aeeccc8bdfdf93ff"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"с"</span>: <span class="attr">"YY000000"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"prices"</span>: [<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"amount"</span>: <span class="attr">"1473"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"RUR"</span>: <span class="attr">"71205"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"concr"</span>: <span class="attr">"3250"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"href2"</span>: <span class="attr">"&amp;otv=102510005340&amp;p=0250819780.0250819780#"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"ag"</span>: <span class="attr">"[14-99][14-99]"</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;...<br>
+        &nbsp;&nbsp;]<br>
+        }<br>
+        <br>
+    </tt>
+</p>
+<p>
+    <tt>cur</tt> - валюта туров<br>
+    <tt>prx</tt> - параметр, необходимый для <a href="http://export.bgoperator.ru/texts/tour-api.html">создания заявок через API.</a>.<br>
+</p><p>
+
+</p><p>Элементы массива <tt>entries</tt> описывают строки прайс-листа: цены на
+    конкретный отель, номер, питание, длительность для разных вариантов
+    размещения в номере. В туре может быть несколько отелей, тогда на
+    каждый отель будет выведен свой идентификатор номер-типа питания и своя
+    длительность.</p>
+<p>
+    <tt>tour_date</tt> — дата начала тура<br>
+    <tt>aircompany</tt> — авиакомпания<br>
+    <tt>town</tt> — город, в котором находится отель<br>
+    <tt>hotel</tt> — отель проживания вместе со категорией<br>
+    <tt>room</tt> — тип номера и питание<br>
+    <tt>dt</tt> — дата начала основного проживания в туре (тег может присутствовать не всегда)<br>
+    <tt>flights</tt> — информация о рейсах в формате html в том же виде, в котором она выводится на сайте в обычном режиме (не JSON). Выводится только, когда указан параметр novirt (см. <a href="https://export.bgoperator.ru/load-xml-prices.html#filter">ниже</a>)<br>
+    <tt>duration</tt> — полная длительность проживания (ночей)<br><tt>o_duration</tt> — длительность основного проживания (ночей) (тег может присутствовать не всегда)<br><tt>b_duration</tt> — длительность до основного проживания (ночей) (b - значит before) (тег может присутствовать не всегда)<br><tt>ab_duration</tt> — вторая длительность до основного проживания (ночей) (ab - значит after before) (тег может присутствовать не всегда)<br><tt>ba_duration</tt> — вторая длительность после основного проживания (ночей) (ba - значит before after) (тег может присутствовать не всегда)<br><tt>a_duration</tt> —&nbsp;длительность после основного проживания (ночей) (a - значит after) (тег может присутствовать не всегда)<br>
+    <tt>id_hotel</tt> — идентификатор отеля в системе Библио-Глобус<br>
+    <tt>isstop</tt> — массив описывает стоп на тур; возможные значения: <tt><span class="val">avia_to</span>, <span class="val">avia_from</span>, <span class="val">hotel</span></tt> отвечают соответственно за стопы на вылет, на возврат и на отель<br>
+    <tt>id_ns</tt> — идентификатор названия номера-типа питания в системе Библио-Глобус<br><tt>b_id_ns</tt>
+    — идентификатор названия номера-типа питания в системе Библио-Глобус
+    &nbsp;до основного проживания (b - значит before) (тег может
+    присутствовать не всегда). <tt>b_id_h</tt> - идентификатор, соответствующего ему отеля <br><tt>ab_id_ns</tt> — второй идентификатор названия номера-типа питания в системе
+    Библио-Глобус &nbsp;до основного проживания (ab - значит after before) (тег может
+    присутствовать не всегда). <tt>ab_id_h</tt> - идентификатор, соответствующего ему отеля<br><tt>ba_id_ns</tt> — второй идентификатор названия номера-типа питания в системе
+    Библио-Глобус после основного проживания (ba - значит&nbsp;before after) (тег может
+    присутствовать не всегда). <tt>ba_id_h</tt> - идентификатор, соответствующего ему отеля<br><tt>a_id_ns</tt> — идентификатор названия номера-типа питания в системе
+    Библио-Глобус после основного проживания (a - значит after) (тег может
+    присутствовать не всегда). <tt>a_id_h</tt> - идентификатор, соответствующего ему отеля<br>
+    <tt>quota</tt> — количество доступных для бронирования мест в отеле тура<br>
+    <tt>ic, id_price, sr, c</tt> — служебные теги, нужные для создания заявки через API системы Библио-Глобус (теги могут присутствовать не всегда)<br>
+    <tt>flt2_ret</tt> — <tt>id</tt> города возвращения. Поле появляется только в том случае, когда город возвращения отличается от города вылета<br>
+    <tt>prices</tt> — массив, описывающий цены<br>
+    <tt>prices / amount</tt> — стоимость в валюте страны<br>
+    <tt>prices / RUR</tt> — стоимость в рублях. Выводится, если валюта страны отличается от рубля<br>
+    <tt>prices / concr</tt> — стоимость конкретизации рейса в рублях<br>
+    <b><font color="red">Внимание!</font></b> Данная информация является справочной и включена в общую стоимость тура для прайса, сформированного с параметром <b>novirt=0</b><br><br>
+    <tt>href0 + href1 + (prices / href2)</tt> - URL, по которому открывается HTML форма создания заявки<br>
+    <b>Пример:</b><tt> prices / isstop=[<span class="val">"avia_to", "avia_from"</span>]</tt> - стоп на вылет и стоп на возврат<br>
+    <tt>prices / ag</tt> — элемент описывает возраста туристов; диапазоны возрастов перечисляются через запятую; границы возрастов включаются в диапазоны<br>
+    <b>Примеры:</b><br>
+    <tt>prices / ag=<span class="val">"2-11,12+"</span></tt> - 1 взрослый + 1 ребенок<br>
+    <tt>prices / ag=<span class="val">"12+,12+"</span></tt> - 2 взрослых<br>
+</p>
+<p></p>Если значение <tt>prices / amount</tt> пустое, значит цены для выбранной комбинации не существует.<p></p>
+
+<p>Для получения доступных цен по наземному обслуживанию необходимо отправить запрос с указанием параметра <tt>id_price=-1</tt> для конкретного выбранного направления и даты. </p>
+<p><b>Пример:</b><br>
+    <a href="http://export.bgoperator.ru/partners?action=price&amp;tid=211&amp;id_price=-1&amp;flt=100410000049&amp;data=29.06.2013&amp;xml=11" target="_blank">http://export.bgoperator.ru/partners?action=price&amp;tid=211&amp;id_price=-1&amp;flt=100410000049&amp;data=29.06.2013&amp;xml=11</a><br>
+    где 100410000049 — идентификатор страны Кипр из справочника стран<br>
+    data=29.06.2013 — дата начала проживания в отеле в формате <tt>DD.MM.YYYY</tt><br>
+</p>
+<p>Формат ответа на запрос цен на наземное обслуживание будет аналогичен формату ответа на запрос прайс-листа.</p>
+
+<a name="filter"></a><h2 align="center">4.1. Расширенные параметры выгрузки цен и фильтрация</h2>
+<p>Вывод цен в формате JSON по умолчанию ограничивается первыми 60
+    элементами из прайс-листа. Для получения большего количества элементов
+    прайс-листа вам необходимо указать дополнительный параметр <b>entr</b> в строке запроса. Значение параметра <b>entr</b> равняется количеству отелей, выдаваемых на странице, плюс 1. <b>entr</b> должен быть больше чем 1. Например, при <b>entr</b> = 3, количество отелей на каждой странице будет 4. <br><b><font color="red">Внимание!</font></b> Параметр <b>m</b> больше недействителен.</p>
+
+<b>Дополнительные параметры запроса, позволяющие отфильтровать выдаваемые элементы прайс-листа.</b>
+
+<p><b>f1</b> — город в стране (идентификатор города), можно указывать несколько значений<br>
+    Пример: добавление <tt>&amp;f1=100510001069</tt> к строке запроса покажет цены только на отели Лимассола</p>
+
+<p><b>f3</b> — звездность отеля (строка, название звездности отеля), можно указывать несколько значений<br>
+    Пример: добавление <tt>&amp;f3=3*&amp;f3=4*</tt> к строке запроса покажет цены только на отели 3* и 4*</p>
+
+<p><b>F4</b> — отель (идентификатор отеля), можно указывать несколько значений<br>
+    Пример: добавление <tt>&amp;F4=102610001472&amp;F4=102610001641</tt> к строке запроса покажет цены только на отели AKTEA BEACH VILLAGE 4* и ALMYRA 4*</p>
+
+<p><b>f7</b> — длительность (число), можно указывать несколько значений<br>
+    Пример: добавление <tt>&amp;f7=7&amp;f7=9</tt> к строке запроса покажет цены только на 7 и 9 ночей. Максимальное количество ночей - <b>28</b>.</p>
+
+<p><b>f8</b> — тип питания (строка, название типа питания), можно указывать несколько значений<br>
+    Пример: добавление <tt>&amp;f8=BB&amp;f8=HB</tt> к строке запроса покажет цены только на номера с питанием BB и HB</p>
+
+<p><b>novirt=0</b> — этот параметр (именно в таком виде) необходимо указать, <br>
+    если нужно вывести прайс с конкретизациями перелётов (для выбора туров с конкретными перелётами)<br>
+    <b><font color="red">Внимание!</font></b> Если тур был куплен без услуги конкретизации рейсов, то, согласно договору, Библио-Глобус имеет право <b>сменить время вылета, аэропорт и авиакомпанию</b>. Рейс может быть изменен даже если на момент бронирования был доступен только один рейс<br>
+    <b><font color="red">Внимание!</font></b> Услуга конкретизации рейсов при создании тура <b>платная</b>.<br>
+    <b><font color="red">Внимание!</font></b> При необходимости создания тура с конкретизацией рейсов через XML API значение тега <tt>&lt;sr&gt;</tt> необходимо брать из прайса, сформированного с параметром <b>novirt=0</b>
+</p>
+
+<p><b>stop=0</b> - при указании такаго параметра будут выведены, среди прочих, туры из <a href="http://export.bgoperator.ru/texts/load-xml-prices.html#stops">стоп-листа</a></p>
+
+<p><b>p</b> — описание групп и возрастов туристов. Каждому туристу соответствует группа символов <tt>0DDMMYYYYS</tt>. Группы разделены точками. <br>
+    <tt>DDMMYYYY</tt> - дата рождения туриста.<br>
+    <tt>S</tt> - строка, состоящая из неповторяющихся цифр от <tt>0</tt> до <tt>4</tt>. Цифры соответствуют группам, в которые входит турист.
+    <br>Примеры.<br>
+    <tt>0010119600.0010119600</tt> - группа 0, состоящая из двух взрослых<br>
+    <tt>02103196001.01612195023.00704200802</tt> - 4 группы.<br>
+    0-ая группа: 1 взрослый + 1 ребенок;<br>
+    1-ая группа: 1 взрослый; <br>
+    2-ая группа: 1 взрослый + 1 ребеонк;<br>
+    3-я группа: 1 взрослый<br>
+<br>
+
+<b>Список категорий отелей:</b>
+<table>
+    <tbody><tr><td>5*</td><td>4* (Superior)</td><td>3*plus</td><td>2*</td><td>DE LUX</td></tr>
+    <tr><td>5*sup (Grand Deluxe)</td><td>4*plus</td><td>3*</td><td>2* (Tourist)</td><td>CLASS A</td></tr>
+    <tr><td>5* (Cat. Deluxe)</td><td>4* (Cat. A)</td><td>3* (Cat. B)</td><td>2* (Cat. B)</td><td>CLASS B</td></tr>
+    <tr><td>5* (Deluxe)</td><td>4*</td><td>3* (Cat. A)</td><td>2* (Cat. C)</td><td>CLASS C</td></tr>
+    <tr><td></td><td></td><td>3* (First)</td><td>1*</td><td>APARTMENT</td></tr>
+    </tbody></table>
+<br>
+<b>Список типов питания:</b>
+<table>
+    <tbody><tr><td>BB</td><td>завтраки</td></tr>
+    <tr><td>HB</td><td>завтраки и ужины</td></tr>
+    <tr><td>FB</td><td>завтраки, обеды и ужины</td></tr>
+    <tr><td>AI</td><td>все включено</td></tr>
+    <tr><td>UAI, ULTRA ALL</td><td>ультра все включено</td></tr>
+    <tr><td>AO</td><td>без питания</td></tr>
+    </tbody></table>
+
+<a name="extended"></a></p><h2 align="center">4.2. Расширенная информация по прайс-листу</h2>
+
+При добавлении в запрос параметра &amp;xml=31 в JSON-ответе выводится расширенная информация по составу тура.
+<p>
+    <b>Формат фрагмента ответа:</b>
+    <tt>
+    </tt></p><tt>
+</tt>
+<p><tt>
+    <span class="attr">"tourComposition"</span>: [<br>
+&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"type"</span>: <span class="attr">"flight"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"id"</span>: <span class="attr">"103151365832;103173777714;"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"data"</span>: <span class="attr">"26.03.2016"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"id2"</span>: <span class="attr">"103123196731;"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"dl"</span>: <span class="attr">"4"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"d2"</span>: <span class="attr">"30.03.2016"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"n"</span>: <span class="attr">"0"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"q"</span>: <span class="attr">"00"</span><br>
+&nbsp;&nbsp;},<br>
+&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"type"</span>: <span class="attr">"transfer"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"title"</span>: <span class="attr">"Трансфер26.03.2016DEGAULLE-PARIS(airport)-Paris(hotel)/group/bus"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"id"</span>: <span class="attr">"103875523965"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"data"</span>: <span class="attr">"26.03.2016"</span><br>
+&nbsp;&nbsp;},<br>
+&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"type"</span>: <span class="attr">"accomodation"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"title"</span>: <span class="attr">"Проживание: с26.03.2016по30.03.2016(4ночи)"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"id"</span>: <span class="attr">"104618112854"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"n"</span>: <span class="attr">"2"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"q"</span>: <span class="attr">"0"</span><br>
+&nbsp;&nbsp;},<br>
+&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"type"</span>: <span class="attr">"transfer"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"title"</span>: <span class="attr">"Трансфер30.03.2016Paris(hotel)-DEGAULLE-PARIS(airport)/group/bus"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"id"</span>: <span class="attr">"103875523957"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"data"</span>: <span class="attr">"30.03.2016"</span><br>
+&nbsp;&nbsp;},<br>
+&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"type"</span>: <span class="attr">"flight"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"id"</span>: <span class="attr">"103123196731;"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"data"</span>: <span class="attr">"30.03.2016"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"id2"</span>: <span class="attr">"103151365832;103173777714;"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"dl"</span>: <span class="attr">"4"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"d2"</span>: <span class="attr">"26.03.2016"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"n"</span>: <span class="attr">"1"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"q"</span>: <span class="attr">"00"</span><br>
+&nbsp;&nbsp;},<br>
+&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"type"</span>: <span class="attr">"medins"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"title"</span>: <span class="attr">"ECONOM-CLASS30000EUR"</span><br>
+&nbsp;&nbsp;},<br>
+&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"type"</span>: <span class="attr">"excursion"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"id"</span>: <span class="attr">"103625040753"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"data"</span>: <span class="attr">"26.03.2016"</span><br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"type"</span>: <span class="attr">"extra"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"id"</span>: <span class="attr">"105827587196"</span><br>
+&nbsp;&nbsp;}<br>
+]<br>
+&nbsp;&nbsp;<br>
+</tt></p>
+
+<a name="flights"></a><h2 align="center">4.2.1 Информация по перелетам</h2>
+
+<p>
+    <tt>flight</tt> — элемент, описывающий авиарейс<br>
+    <tt>&nbsp;&nbsp;id</tt> — идентификаторы авиаперелётов в системе Библио-Глобус, разделённые ";" <br>
+    <tt>&nbsp;&nbsp;data</tt> — дата рейса<br>
+    <tt>&nbsp;&nbsp;id2</tt> — идентификаторы рейсов, связанных ("туда-обратно") с рейсами <tt>id</tt><br>
+    <tt>&nbsp;&nbsp;data2</tt> — дата рейса<br>
+    <tt>&nbsp;&nbsp;q</tt> — индикатор наличия мест; принимает значение <tt>0</tt> (места эконом класса необходимо запрашивать) или строки из двух символов (например, <tt>a4</tt>). В этом случае первый символ отвечает за места эконом класса, второй - за бизнес класс. Каждый символ - это либо ненулевая цифра (количество мест в наличии), либо <tt>0</tt> (необходимо запрашивать), либо <tt>a</tt> (много мест), либо <tt>c</tt> (мест нет).
+</p>
+<p>
+    Для получения детальной информации по перелёту (<tt>id</tt> и <tt>data</tt>) необходимо выполнить следующий запрос:
+    <a href="http://export.bgoperator.ru/yandex?action=flightdetails&amp;id=103139130550&amp;data=10.10.2014">http://export.bgoperator.ru/yandex?action=flightdetails&amp;id=103139130550&amp;data=10.10.2014</a>
+</p>
+
+<a name="transfer"></a><h2 align="center">4.2.2 Информация по трансферам</h2>
+
+<p>
+<tt>transfer</tt> — элемент, описывающий трансфер<br>
+<tt>&nbsp;&nbsp;title</tt> — строковое представление трансфера<br>
+<tt>&nbsp;&nbsp;data</tt> — дата трансфера<br>
+<tt>&nbsp;&nbsp;id</tt> — идентификатор трансфера в системе Библио-Глобус.<br>
+Чтобы получить альтернативы для текущего трансфера, необходимо выполнить запрос вида:<br>
+<a href="http://export.bgoperator.ru/partners?action=title&amp;id=103820000045&amp;data=12.12.2015&amp;id_valut=EUR&amp;xml=11">http://export.bgoperator.ru/partners?action=title&amp;id=103820000045&amp;data=12.12.2015&amp;id_valut=EUR&amp;xml=11</a>,<br>
+подставив в него <tt>id</tt> и <tt>data</tt> из текущего трансфера и валюту <tt>id_valut</tt> из верхней секции прайс-листа.<br>
+Система выдаст в JSON-формате список альтернативных вариантов трансферов с ценами. Трансферы могут быть <a href="https://export.bgoperator.ru/texts/tour-api.html#transfers">прикреплены</a> к заявкам, создаваемым через API.
+</p>
+
+<a name="dop"></a><h2 align="center">4.2.3 Информация по экскурсиям и доп. услугам</h2>
+<p>
+<tt>excursion</tt> — элемент, описывающий экскурсию<br>
+<tt>&nbsp;&nbsp;id</tt> — идентификатор экскурсии в системе Библио-Глобус<br>
+<tt>&nbsp;&nbsp;data</tt> — дата экскурсии<br>
+Чтобы получить список экскурсий с описаниями и ценами, необходимо выполнить запрос вида:<br>
+<a href="http://export.bgoperator.ru/partners?xml=11&amp;action=title&amp;id=300010000000&amp;flt=100410000049&amp;data=31.03.2016&amp;n=2&amp;id_price=121120516103">http://export.bgoperator.ru/partners?xml=11&amp;action=title&amp;id=300010000000&amp;flt=100410000049&amp;data=31.03.2016&amp;n=2&amp;id_price=121120516103</a>,<br>
+подставив в него страну экскурсий <tt>flt</tt>, дату экскурсий <tt>data</tt>, количество человек <tt>n</tt> и прайс-лист <tt>id_price</tt>, по которому возможны экскурсии.
+Система выдаст в JSON-формате список экскурсий.<br>
+</p><p>
+    <b>Формат фрагмента ответа:</b>
+</p>
+<p>
+<tt>
+"103618102053": {<br>
+&nbsp;&nbsp;"1005": [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"100510001070",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"100510001067"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;],<br>
+&nbsp;&nbsp;"2005": [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"Protaras",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"AyiaNapa"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;],<br>
+&nbsp;&nbsp;"name": "Accompaniment around Cyprus HALF DAY STANDARD CAR / Индивидуальная экскурсия по Кипру на полдня по эксклюзивно разработанному маршруту от 1 до 4 человек на стандартной машине",<br>
+&nbsp;&nbsp;"ps": 230,<br>
+&nbsp;&nbsp;"dates": [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"31.03.2016"<br>
+&nbsp;&nbsp;]<br>
+}<br><br>
+</tt>
+
+<tt>1005</tt> — список <tt>id</tt> городов, из которых возможна текущая экскурсия<br>
+<tt>2005</tt> — список названий городов, соответствующий списку <tt>1005</tt><br>
+<tt>name</tt> — название экскурсии<br>
+<tt>ps</tt> — цена экскурсии из городов из списка <tt>1005</tt>. Значением является число или элемент с полями <tt>adt</tt>, <tt>chd</tt> и <tt>inf</tt>, в которых указаны цены за взрослого, ребенка и младенца соответственно.<br>
+<tt>data</tt> — даты экскурсий из городов из списка <tt>1005</tt><br>
+</p>
+
+<p>Список дополнительных услуг, услуг аренды автомобилей, книг на продажу и билетов на продажу могут быть получены по аналогичной ссылке.
+Для этого в запросе нужно изменить параметр <tt>id</tt> соответственно на <tt>300110000000</tt>, <tt>300210000000</tt>, <tt>300310000000</tt> и <tt>300410000000</tt>.
+
+</p><p></p>
+<a name="min_prices"></a><h2 align="center">5. Выгрузка горящих спецпредложений туроператора</h2>
+<p>Для получение списка горящих спецпредложений необходимо загрузить XML-файл для конкретного выбранного города вылета. </p>
+<p><b>Пример:</b><br>
+    <a href="http://export.bgoperator.ru/yandex?action=minprice&amp;cityId=100510000863" target="_blank">http://export.bgoperator.ru/yandex?action=minprice&amp;cityId=100510000863</a><br>
+    где 100510000863 — идентификатор города Москва из справочника городов<br>
+</p>
+<p>
+    <b>Формат содержимого файла:</b><br>
+    <tt>
+        &lt;root&gt;<br>
+        &nbsp;&nbsp;&lt;entry&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&lt;country&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;id&gt;<span class="val">100410000049</span>&lt;/id&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;name&gt;<span class="val">КИПР</span>&lt;/name&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&lt;/country&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&lt;city&gt;<span class="val">100510000863</span>&lt;/city&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&lt;aircompany&gt;<span class="val">Трансаэро</span>&lt;/aircompany&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&lt;cost&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;amount&gt;<span class="val">295</span>&lt;/amount&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;valute&gt;<span class="val">EUR</span>&lt;/valute&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&lt;/cost&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&lt;duration&gt;<span class="val">3</span>&lt;/duration&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&lt;date&gt;<span class="val">30.09.2012</span>&lt;/date&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&lt;tourname&gt;<span class="val">ТУРЫ НА КИПР</span>&lt;/tourname&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&lt;url&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="val">http://www.bgoperator.ru/main5.shtml?action=price&amp;tid=211&amp;flt=100410000049&amp;flt2=100510000863&amp;id_price=121175915306&amp;data=30.09.2012&amp;f3=3*</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&lt;/url&gt;<br>
+        &nbsp;&nbsp;&lt;/entry&gt;<br>
+        &nbsp;&nbsp;…<br>
+        &lt;/root&gt;<br>
+    </tt>
+</p>
+<p>
+    <tt>country / id</tt> — идентификатор страны<br>
+    <tt>country / name</tt> — название страны<br>
+    <tt>city</tt> — идентификатор города вылета<br>
+    <tt>aircompany</tt> — название авиакомпании<br>
+    <tt>cost / amount</tt> — сумма в валюте<br>
+    <tt>cost / valute</tt> — код валюты<br>
+    <tt>duration</tt> — длительность тура<br>
+    <tt>date</tt> — дата вылета<br>
+    <tt>tourname</tt> — название маршрута прайс-листа<br>
+    <tt>url</tt> — ссылка на прайс-лист<br>
+</p>
+<a name="spo"></a><h2 align="center">6. Выгрузка спецпредложений с мгновенным подтверждением</h2>
+<p>Списки спецпредложений хранятся в автогенерируемых файлах, доступных по ссылкам вида <b>http://export.bgoperator.ru/auto/auto-spo-{flt2}-124331253701.js</b>, где <tt>flt2</tt> - идентификатор города вылета в системе Библио-Глобус.<br>
+    <b>Пример:</b> <a href="http://export.bgoperator.ru/auto/auto-spo-100510000863v2-124331253701.js" target="_blank">http://export.bgoperator.ru/auto/auto-spo-100510000863v2-124331253701.js</a><br>
+</p>
+<p>
+    <b>Формат содержимого файла:</b><br>
+    <tt>
+        [<br>
+        &nbsp;&nbsp;{<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"data"</span> : <span class="attr">"09.07.2014"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"URL"</span> : <span class="attr">"http://www.bgoperator.ru/price.shtml?action=price&amp;idt=&amp;tid=211&amp;id_price=121125221707&amp;flt2=100510000863&amp;flt=100411293179&amp;data=09.07.2014&amp;f7=2&amp;f7=4&amp;f7=6&amp;f7=7&amp;F4=102625929987&amp;p=0070619780.0070619780&amp;otn=104625930011&amp;otv=102510005340&amp;f8=BB&amp;ok=0"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"hotelTown"</span> : <span class="attr">"Мармарис"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"hotelPic"</span> : <span class="attr">"http://www.bgoperator.ru/pr_img/sm1240100354/20140405/2803980246/5091069817120126.png"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"cntryName"</span> : <span class="attr">"Турция"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"hotelURL"</span> : <span class="attr">"http://www.bgoperator.ru/price.shtml?flt=100411293179&amp;tid=26&amp;code=102625929987&amp;action=shw"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"hotelId"</span> : <span class="attr">"102625929987"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"hotelName"</span> : <span class="attr">"Gold Kaya Hotel 3*"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"meal"</span> : <span class="attr">"BB"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"dur"</span> : <span class="attr">"2, 4, 6, 7"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"amount"</span> : <span class="attr">"173"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"val"</span> : <span class="attr">"USD"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">"RUR"</span> : <span class="attr">"6124"</span><br>
+        &nbsp;&nbsp;},<br>
+        &nbsp;&nbsp;...<br>
+        ]<br>
+    </tt>
+</p>
+<p>
+    <tt>data</tt> — дата вылета<br>
+    <tt>URL</tt> — поисковый URL, по которому ищутся предложения, среди которых есть текущее<br>
+    <tt>hotelTown</tt> — название курорта<br>
+    <tt>hotelPic</tt> — ссылка на картинку отеля<br>
+    <tt>cntryName</tt> — название страны тура<br>
+    <tt>hotelURL</tt> — ссылка на страницу отеля<br>
+    <tt>hotelId</tt> — индентификатор отеля в системе Библио-Глобус<br>
+    <tt>hotelName</tt> — название отеля<br>
+    <tt>meal</tt> — питание<br>
+    <tt>dur</tt> — список длительностей через запятую<br>
+    <tt>amount</tt> — сумма в валюте за наименьшую длительность<br>
+    <tt>val</tt> — валюта тура<br>
+    <tt>RUR</tt> — сумма в рублях за наименьшую длительность<br>
+    <tt>ok</tt> — (<b>ВАЖНО</b>) данное поле присутствует и равно <tt>0</tt>, если текущее предложение является предложением с мгновенным подтверждением<br>
+</p>
+
+<a name="blockavia"></a><h2 align="center">7. Поисковый запрос цен на чартерные авиаперелеты</h2>
+<p>Запрос возвращает стоимость чартерной перевозки для указанного количества и возрастов туристов. Формат запроса:</p>
+<tt><code>http://export.bgoperator.ru/site?action=biletblock&amp;vr0=1&amp;vr1=1&amp;vr2=0&amp;idfrom=100510000863&amp;idto=100510001068&amp;datefrom=2017-01-20&amp;dateto=2017-01-27&amp;class=Y&amp;cur=EUR</code></tt>
+<br>
+где<br>
+
+<tt>vr0</tt> — количество взрослых<br>
+<tt>vr1</tt> — количество детей<br>
+<tt>vr2</tt> — количество инфантов<br>
+<tt>idfrom</tt> — id города вылета в системе Библио-Глобус либо IATA-код аэропорта вылета.<br>
+<tt>idto</tt> — id города прилета в системе Библио-Глобус либо IATA-код аэропорта прилета.<br>
+<tt>datefrom</tt> — дата вылета в формате YYYY-MM-DD<br>
+<tt>dateto</tt> — дата возврата в формате YYYY-MM-DD. Если идет поиск перелета в одну сторону, этот параметр должен отсутствовать в запросе<br>
+<tt>class</tt> — класс перелета. Y - экономический, C - бизнес<br>
+<tt>cur</tt> — валюта ответа. Опциональный параметр. По-умолчанию RUB. Возможные значения RUB,EUR,USD<br>
+<br>
+    <b>Формат содержимого файла:</b><br>
+    <tt>
+    <pre class="attr">{
+    "prx": "104499999900000071",
+    "offers": [{
+        "price": 4446,
+        "nodes": ["FV550320170303", "FV550420170310"]
+    }],
+    "nodes": {
+        "FV550320170303": {
+            "ac": "FV",
+            "fn": "5503",
+            "dep": {
+                "d": "03.03.2017",
+                "t": "16:10:00",
+                "n": "VKO"
+            },
+            "arr": {
+                "d": "03.03.2017",
+                "t": "18:50:00",
+                "n": "AER"
+            }
+        },
+        "FV550420170310": {
+            "ac": "FV",
+            "fn": "5504",
+            "dep": {
+                "d": "10.03.2017",
+                "t": "20:05:00",
+                "n": "AER"
+            },
+            "arr": {
+                "d": "10.03.2017",
+                "t": "22:40:00",
+                "n": "VKO"
+            }
+        }
+    }
+}
+    </pre>
+    </tt>
+<p></p>
+<p>
+    <tt>prx</tt> — идентификатор сессии<br>
+    <tt>nodes</tt> — описание рейсов, участвующих в ценах. Каждый узел имеет уникальное имя, которое используется при описании цены<br>
+    &nbsp;&nbsp;<tt>ac</tt> — код авиакомпании<br>
+    &nbsp;&nbsp;<tt>fn</tt> — номер рейса<br>
+    &nbsp;&nbsp;<tt>dep</tt> — описание точки отправления<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<tt>d</tt> — дата вылета. формат DD.MM.YYYY<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<tt>t</tt> — время вылета. Формат HH:MM:SS или HH:MM<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<tt>n</tt> — IATA-код аэропорта<br>
+    &nbsp;&nbsp;<tt>arr</tt> — описание точки прибытия. Структура полей эквивалентна описанной в "<tt>dep</tt>"<br>
+    <tt>offers</tt> — список цен на сочетания рейсов<br>
+    &nbsp;&nbsp;<tt>price</tt> — цена в валюте запроса, целое число<br>
+    &nbsp;&nbsp;<tt>nodes</tt> — список рейсов, к которым применяется цена. Названия узлов из структуры "<tt>nodes</tt>"<br>
+</p>
+
+<a name="avia"></a><h2 align="center">8. Поисковый запрос цен на регулярные авиаперелеты</h2>
+<p>Запрос возвращает стоимость регулярной перевозки для указанного количества и возрастов туристов. Формат запроса:</p>
+<tt><code>http://export.bgoperator.ru/site?action=biletapi&amp;vr0=1&amp;vr1=1&amp;vr2=0&amp;idfrom=100510000863&amp;idto=100510001068&amp;datefrom=2017-01-20&amp;dateto=2017-01-27&amp;class=Y&amp;cur=EUR</code></tt>
+<br>
+где<br>
+
+<tt>vr0</tt> — количество взрослых<br>
+<tt>vr1</tt> — количество детей<br>
+<tt>vr2</tt> — количество инфантов<br>
+<tt>idfrom</tt> — id города вылета в системе Библио-Глобус либо IATA-код аэропорта вылета.<br>
+<tt>idto</tt> — id города прилета в системе Библио-Глобус либо IATA-код аэропорта прилета.<br>
+<tt>datefrom</tt> — дата вылета в формате YYYY-MM-DD<br>
+<tt>dateto</tt> — дата возврата в формате YYYY-MM-DD. Если идет поиск перелета в одну сторону, этот параметр должен отсутствовать в запросе<br>
+<tt>class</tt> — класс перелета. Y - экономический, C - бизнес<br>
+<tt>cur</tt> — валюта ответа. Опциональный параметр. По-умолчанию RUB. Возможные значения RUB,EUR,USD<br>
+<br>
+<b>Формат содержимого файла:</b><br>
+<tt>
+    <pre class="attr">{
+    "prx": "104499999900000038",
+    "offers": [
+        {
+            "offerID": "1.25387.AFL.MA.12(ORSU1150.24121111102412111505.SVO.AER~ORSU1141.24121321202412140045.AER.SVO)(MTEwMjE3MzA1MjU2MzI5NTg1MjZfMzQ0XjI1MTQ3LjAwCgkJCQkJXjExMDIxNzMwNTI1NjMyOTU4NTI2OjFeQURUXjEzNzAwLjB-Ml5DSEReMTE0NDcuMH4zXklORl4wLjA)(I1_1_EL_RFMSLR/IN00_1PC_MA~2_EL_RFMSLR/IN00_1PC_MA)(A1_1_EL_RFMSLR_2PC_MA~2_EL_RFMSLR_2PC_MA)(C1_1_EL_RFMSLR/CH15_2PC_MA~2_EL_RFMSLR/CH15_2PC_MA)#sc=bf8e205cdb1f7aae9f216aeb2486612f",
+            "price": 25387,
+            "nodes": [
+                "SU115020241211",
+                "SU114120241213"
+            ],
+            "directions": [
+                [
+                    0
+                ],
+                [
+                    1
+                ]
+            ],
+            "adt": [
+                {
+                    "bag": "2PC",
+                    "brand": "EL",
+                    "brandname": "Economy Flex",
+                    "fbc": "RFMSLR"
+                },
+                {
+                    "bag": "2PC",
+                    "brand": "EL",
+                    "brandname": "Economy Flex",
+                    "fbc": "RFMSLR"
+                }
+            ],
+            "chd": [
+                {
+                    "bag": "2PC",
+                    "brand": "EL",
+                    "brandname": "Economy Flex",
+                    "fbc": "RFMSLR/CH15"
+                },
+                {
+                    "bag": "2PC",
+                    "brand": "EL",
+                    "brandname": "Economy Flex",
+                    "fbc": "RFMSLR/CH15"
+                }
+            ],
+            "inf": [
+                {
+                    "bag": "1PC",
+                    "brand": "EL",
+                    "brandname": "Economy Flex",
+                    "fbc": "RFMSLR/IN00"
+                },
+                {
+                    "bag": "1PC",
+                    "brand": "EL",
+                    "brandname": "Economy Flex",
+                    "fbc": "RFMSLR/IN00"
+                }
+            ]
+        }
+    ],
+    "nodes": {
+        "SU114120241213": {
+            "ac": "SU",
+            "fn": "1141",
+            "dep": {
+                "d": "13.12.2024",
+                "t": "21:20:00",
+                "n": "AER"
+            },
+            "arr": {
+                "d": "14.12.2024",
+                "t": "00:45:00",
+                "n": "SVO"
+            }
+        },
+        "SU115020241211": {
+            "ac": "SU",
+            "fn": "1150",
+            "dep": {
+                "d": "11.12.2024",
+                "t": "11:10:00",
+                "n": "SVO"
+            },
+            "arr": {
+                "d": "11.12.2024",
+                "t": "15:05:00",
+                "n": "AER"
+            }
+        }
+    }
+}
+    </pre>
+</tt>
+<p></p>
+<p>
+  <tt>prx</tt> — идентификатор сессии<br>
+  <tt>nodes</tt> — описание рейсов, участвующих в ценах. Каждый узел имеет уникальное имя, которое используется при описании цены<br>
+  &nbsp;&nbsp;<tt>ac</tt> — код авиакомпании<br>
+  &nbsp;&nbsp;<tt>fn</tt> — номер рейса<br>
+  &nbsp;&nbsp;<tt>dep</tt> — описание точки отправления<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<tt>d</tt> — дата вылета. формат DD.MM.YYYY<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<tt>t</tt> — время вылета. Формат HH:MM:SS или HH:MM<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<tt>n</tt> — IATA-код аэропорта<br>
+  &nbsp;&nbsp;<tt>arr</tt> — описание точки прибытия. Структура полей эквивалентна описанной в "<tt>dep</tt>"<br>
+  <tt>offers</tt> — список цен на сочетания рейсов и тарифов<br>
+  &nbsp;&nbsp;<tt>offerID</tt> — идентификатор бронирования, должен быит передан далее в запрос на бронирование<br>
+  &nbsp;&nbsp;<tt>price</tt> — цена в валюте запроса, целое число<br>
+  &nbsp;&nbsp;<tt>nodes</tt> — список рейсов, к которым применяется цена. Названия узлов из структуры "<tt>nodes</tt>"<br>
+  &nbsp;&nbsp;<tt>directions</tt> — распределение рейсов по направлениям в соответствии с заданным в запросе маршрутом<br>
+  &nbsp;&nbsp;<tt>adt,chd,inf</tt> — блок описания тарифов для соответствующей категории туристов, выводятся посегментно. Порядок вывода соответствует порядку рейсов (nodes в offer) <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<tt>bag</tt> — норма провоза багажа<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<tt>brand</tt> — тариф<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<tt>brandname</tt> — название тарифа<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<tt>fbc</tt> — farebasiscode<br>
+</p>
+
+
+
+</body></html>
