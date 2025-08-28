@@ -12,9 +12,16 @@ import {
   FormItem,
   FormLabel,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePickerWithRange } from '../ui/date-picker';
-import { Calendar, Users, Plane, Search } from 'lucide-react';
+import { Calendar, Users, Plane, Search, Star, Utensils } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 
 const searchSchema = z.object({
@@ -24,12 +31,16 @@ const searchSchema = z.object({
     to: z.date(),
   }).optional(),
   travelers: z.number().min(1),
+  stars: z.string().optional(),
+  mealType: z.string().optional(),
 });
 
 export type SearchCriteria = {
     country: string;
     dates?: DateRange;
     travelers: number;
+    stars?: string;
+    mealType?: string;
 }
 
 interface SearchFormProps {
@@ -43,6 +54,8 @@ export function SearchForm({ onSearch, isSearching }: SearchFormProps) {
     defaultValues: {
       country: '',
       travelers: 2,
+      stars: '',
+      mealType: '',
     },
   });
 
@@ -58,7 +71,7 @@ export function SearchForm({ onSearch, isSearching }: SearchFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-5 gap-6">
               <FormField
                 control={form.control}
                 name="country"
@@ -95,6 +108,54 @@ export function SearchForm({ onSearch, isSearching }: SearchFormProps) {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="stars"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2"><Star size={16}/> Hotel Stars</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Any" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">Any</SelectItem>
+                        <SelectItem value="5*">5 Stars</SelectItem>
+                        <SelectItem value="4*">4 Stars</SelectItem>
+                        <SelectItem value="3*">3 Stars</SelectItem>
+                        <SelectItem value="2*">2 Stars</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+                />
+              <FormField
+                control={form.control}
+                name="mealType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2"><Utensils size={16}/> Meal Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Any" />
+                        </Trigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">Any</SelectItem>
+                        <SelectItem value="AO">Without meals (AO)</SelectItem>
+                        <SelectItem value="BB">Breakfast (BB)</SelectItem>
+                        <SelectItem value="HB">Half board (HB)</SelectItem>
+                        <SelectItem value="FB">Full board (FB)</SelectItem>
+                        <SelectItem value="AI">All Inclusive (AI)</SelectItem>
+                        <SelectItem value="UAI">Ultra All Inclusive (UAI)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+                />
             </div>
           </CardContent>
           <CardFooter>

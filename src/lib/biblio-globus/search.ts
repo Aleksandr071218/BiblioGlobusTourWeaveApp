@@ -62,7 +62,16 @@ export async function searchTours(criteria: SearchCriteria): Promise<Tour[]> {
     }
 
     // 2. Get available price lists
-    const priceListUrl = `http://export.bgoperator.ru/yandex?action=files&flt=${targetCountry.id}&flt2=${departureCity.id}&xml=11`;
+    let priceListUrl = `http://export.bgoperator.ru/yandex?action=files&flt=${targetCountry.id}&flt2=${departureCity.id}&xml=11`;
+    
+    // Add extra filters to URL
+    if (criteria.stars) {
+      priceListUrl += `&f3=${encodeURIComponent(criteria.stars)}`;
+    }
+    if (criteria.mealType) {
+      priceListUrl += `&f8=${encodeURIComponent(criteria.mealType)}`;
+    }
+
     const priceListResponse = await apiClient(priceListUrl);
     if (!priceListResponse.ok) {
         throw new Error(`Failed to fetch price lists: ${priceListResponse.statusText}`);
@@ -84,9 +93,19 @@ export async function searchTours(criteria: SearchCriteria): Promise<Tour[]> {
             }
         }
         
-        const tourDetailsResponse = await apiClient(priceList.url);
+        let tourDetailsUrl = priceList.url;
+        // The URL from price list already contains filters, but we ensure they are present if user specified them
+        // This logic can be refined, but for now we just append. The API seems to handle duplicate params.
+        if (criteria.stars && !tourDetailsUrl.includes('&f3=')) {
+          tourDetailsUrl += `&f3=${encodeURIComponent(criteria.stars)}`;
+        }
+        if (criteria.mealType && !tourDetailsUrl.includes('&f8=')) {
+          tourDetailsUrl += `&f8=${encodeURIComponent(criteria.mealType)}`;
+        }
+
+        const tourDetailsResponse = await apiClient(tourDetailsUrl);
         if (!tourDetailsResponse.ok) {
-            console.warn(`Failed to fetch tour details from ${priceList.url}`);
+            console.warn(`Failed to fetch tour details from ${tourDetailsUrl}`);
             continue;
         }
         const tourDetailsData: { entries: TourEntry[] } = await tourDetailsResponse.json();
