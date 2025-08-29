@@ -2,7 +2,7 @@
   "firestore": {
     "database": "(default)",
     "location": "eur3",
-    "rules": "studio-9465130682:~/studio{main}$ firebase deploy",
+    "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   }
 }

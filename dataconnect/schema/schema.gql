@@ -5,46 +5,26 @@ type User @table {
   photoUrl: String
 }
 
-type Movie @table {
-  title: String!
-  year: Int!
-  createdAt: Timestamp!
-  summary: String
-  genres: [String]
-  runtimeMinutes: Int
+type Hotel @table {
+  name: String!
+  address: String
+  stars: Int
 }
 
-type Watch @table {
-  user: User!
-  movie: Movie!
-  watchDate: Date!
-  createdAt: Timestamp!
-  location: String
+type Tour @table {
+  country: String!
+  city: String!
+  departureDate: Date!
+  returnDate: Date!
+  price: Float!
+  hotel: Hotel!
+  imageUrl: String
 }
 
 type Review @table {
-  watch: Watch!
-  movie: Movie!
   user: User!
+  tour: Tour!
   rating: Int!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  isPublic: Boolean!
   text: String
-}
-
-type MovieList @table {
-  user: User!
-  name: String!
-  isPublic: Boolean!
   createdAt: Timestamp!
-  updatedAt: Timestamp!
-  description: String
-}
-
-type MovieListItem @table {
-  movieList: MovieList!
-  movie: Movie!
-  position: Int!
-  note: String
 }

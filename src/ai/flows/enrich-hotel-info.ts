@@ -10,10 +10,6 @@
  
 import { createHash } from 'crypto';
 import {ai} from '@/ai/genkit';
-
-// In-memory cache for enriched hotel info
-const enrichCache = new Map<string, EnrichHotelInfoOutput>();
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 import {z} from 'genkit';
 import {Client, PlaceData, PlaceDetailsRequest, PlacePhoto, PlaceReview} from '@googlemaps/google-maps-services-js';
 
@@ -23,15 +19,16 @@ const EnrichHotelInfoInputSchema = z.object({
 });
 export type EnrichHotelInfoInput = z.infer<typeof EnrichHotelInfoInputSchema>;
 
-const EnrichHotelInfoOutputSchema = z.object({
-  googlePlacesInfo: z.object({
-    rating: z.number().optional().describe('The rating of the hotel from Google Places.'),
-    photos: z.array(z.string()).optional().describe('URLs of photos of the hotel from Google Places.'),
-    amenities: z.array(z.string()).optional().describe('A list of amenities offered by the hotel.'),
-    reviews: z.array(z.string()).optional().describe('A list of reviews for the hotel from Google Places.'),
-  }).optional().describe('Hotel information from Google Places.'),
-});
-export type EnrichHotelInfoOutput = z.infer<typeof EnrichHotelInfoOutputSchema>;
+import { EnrichHotelInfoOutputSchema } from '@/types';
+
+interface EnrichCacheEntry {
+  data: EnrichHotelInfoOutput;
+  timestamp: number;
+}
+
+// In-memory cache for enriched hotel info
+const enrichCache = new Map<string, EnrichCacheEntry>();
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 export async function enrichHotelInfo(input: EnrichHotelInfoInput): Promise<EnrichHotelInfoOutput> {
   return enrichHotelInfoFlow(input);
@@ -72,7 +69,8 @@ const getGooglePlacesInfo = ai.defineTool({
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) {
     console.error('GOOGLE_PLACES_API_KEY environment variable not set.');
-    return { error: 'API key is not configured.' };
+    // This error will be caught by the surrounding try/catch block in the flow
+    throw new Error('API key is not configured.');
   }
 
   const client = new Client({});
@@ -140,7 +138,7 @@ const getGooglePlacesInfo = ai.defineTool({
     };
   } catch (error: any) {
     console.error('Error fetching data from Google Places API:', error.response?.data || error.message);
-    return { error: 'Failed to retrieve data from Google Places API.' };
+    throw new Error('Failed to retrieve data from Google Places API.');
   }
 });
 
@@ -173,19 +171,16 @@ const enrichHotelInfoFlow = ai.defineFlow(
     
     // Check if we have a valid cached result
     const cachedEntry = enrichCache.get(cacheKey);
-    if (cachedEntry) {
-      const entryTimestamp = (cachedEntry as any).timestamp; // Add timestamp property to cache entry type if possible
-      if (entryTimestamp && (Date.now() - entryTimestamp) < CACHE_TTL) {
-        console.log('Returning cached enriched info for hotel:', input.hotelName);
-        return cachedEntry;
-      }
+    if (cachedEntry && (Date.now() - cachedEntry.timestamp) < CACHE_TTL) {
+      console.log('Returning cached enriched info for hotel:', input.hotelName);
+      return cachedEntry.data;
     }
 
     const {output} = await prompt(input);
     
     // Save result to cache with timestamp
     if (output) {
-      enrichCache.set(cacheKey, {...output, timestamp: Date.now()} as EnrichHotelInfoOutput);
+      enrichCache.set(cacheKey, { data: output, timestamp: Date.now() });
     }
     
     return output!;

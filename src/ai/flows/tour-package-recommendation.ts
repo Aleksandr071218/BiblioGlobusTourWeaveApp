@@ -13,6 +13,7 @@ import {z} from 'genkit';
 import { searchTours } from '@/lib/biblio-globus/search';
 import type { Tour } from '@/types';
 import { enrichHotelInfo, EnrichHotelInfoOutput } from './enrich-hotel-info';
+import { EnrichHotelInfoOutputSchema } from '@/types';
 
 const RecommendTourPackagesInputSchema = z.object({
   preferences: z.string().describe("A natural language description of the client's preferences (e.g., budget, interests, travel style, destination, dates, duration)."),

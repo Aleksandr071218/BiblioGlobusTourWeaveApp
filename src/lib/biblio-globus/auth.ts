@@ -14,12 +14,6 @@ const CookieSchema = z.object({
 
 export type BiblioGlobusCookie = z.infer<typeof CookieSchema>;
 
-/**
- * Parses cookies from the 'set-cookie' headers of a fetch response.
- * @param headers - The response headers.
- * @returns An object containing the required cookies.
- * @throws If any of the required cookies (A1, Z1, L) are missing.
- */
 function parseCookies(headers: Headers): BiblioGlobusCookie {
   const parsedHeaders = AuthResponseHeadersSchema.safeParse({
     'set-cookie': headers.getSetCookie(),
@@ -47,7 +41,6 @@ function parseCookies(headers: Headers): BiblioGlobusCookie {
   return result.data;
 }
 
-
 /**
  * Authenticates with the Biblio-Globus API and returns session cookies.
  * This function should be called once to get the initial cookies.
@@ -56,7 +49,7 @@ function parseCookies(headers: Headers): BiblioGlobusCookie {
  * @throws If login or password are not set in environment variables or if authentication fails.
  */
 export async function authenticate(): Promise<BiblioGlobusCookie> {
-  const login = process.env.BIBLIO_GLOBus_LOGIN;
+  const login = process.env.BIBLIO_GLOBUS_LOGIN;
   const password = process.env.BIBLIO_GLOBUS_PASSWORD;
 
   if (!login || !password) {

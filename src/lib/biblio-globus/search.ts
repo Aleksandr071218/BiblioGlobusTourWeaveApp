@@ -8,14 +8,14 @@ import type { Tour } from '@/types';
 import { getCountries, getCities, getHotels } from './references';
 import { format } from 'date-fns';
 
-// In-memory cache for search results
-const searchCache = new Map<string, Tour[]>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
 interface CacheEntry {
   data: Tour[];
   timestamp: number;
 }
+
+// In-memory cache for search results
+const searchCache = new Map<string, CacheEntry>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 // Interfaces for Biblio-Globus API responses
 interface PriceListEntry {
@@ -68,6 +68,11 @@ export async function searchTours(criteria: SearchCriteria): Promise<Tour[]> {
         getHotels(apiClient)
     ]);
 
+    // Create Maps for efficient O(1) lookups instead of O(n) array.find() in a loop
+    const hotelsMap = new Map(hotels.map(h => [h.key, h]));
+    const citiesMap = new Map(cities.map(c => [c.id, c]));
+
+
     const targetCountry = countries.find(c => c.title_ru.toLowerCase() === criteria.country.toLowerCase());
     if (!targetCountry) {
         console.warn(`Country not found: ${criteria.country}`);
@@ -102,7 +107,7 @@ export async function searchTours(criteria: SearchCriteria): Promise<Tour[]> {
 
     // 3. Fetch and process each relevant price list
     // Let's limit to first 3 price lists for performance in this example
-    const relevantPriceLists = priceListData.entries.slice(0, 3); 
+    const relevantPriceLists = (priceListData.entries || []).slice(0, 3); 
 
     for (const priceList of relevantPriceLists) {
         // Apply date filters if provided
@@ -123,6 +128,9 @@ export async function searchTours(criteria: SearchCriteria): Promise<Tour[]> {
           tourDetailsUrl += `&f8=${encodeURIComponent(criteria.mealType)}`;
         }
 
+        // Add entr parameter to get results
+        tourDetailsUrl += '&entr=100';
+
         const tourDetailsResponse = await apiClient(tourDetailsUrl);
         if (!tourDetailsResponse.ok) {
             console.warn(`Failed to fetch tour details from ${tourDetailsUrl}`);
@@ -130,14 +138,14 @@ export async function searchTours(criteria: SearchCriteria): Promise<Tour[]> {
         }
         const tourDetailsData: { entries: TourEntry[] } = await tourDetailsResponse.json();
 
-        const toursFromPriceList = tourDetailsData.entries.map(entry => {
-            const hotelInfo = hotels.find(h => h.key === entry.id_hotel);
-            const priceInfo = entry.prices.find(p => p.ag.includes('14-99') || p.ag.includes('12+')); // Find price for adults
+        const toursFromPriceList = (tourDetailsData.entries || []).flatMap(entry => {
+            const hotelInfo = hotelsMap.get(entry.id_hotel);
+            const priceInfo = (entry.prices || []).find(p => p.ag.includes('14-99') || p.ag.includes('12+')); // Find price for adults
             
-            if (!hotelInfo || !priceInfo) return null;
+            if (!hotelInfo || !priceInfo) return [];
 
             // Calculate min and max prices from all prices in the entry
-            const prices = entry.prices.map(p => parseInt(p.RUR || p.amount, 10)).filter(p => !isNaN(p));
+            const prices = (entry.prices || []).map(p => parseInt(p.RUR || p.amount, 10)).filter(p => !isNaN(p));
             const minPrice = prices.length > 0 ? Math.min(...prices) : undefined;
             const maxPrice = prices.length > 0 ? Math.max(...prices) : undefined;
 
@@ -146,11 +154,12 @@ export async function searchTours(criteria: SearchCriteria): Promise<Tour[]> {
             const returnDate = new Date(departureDate);
             returnDate.setDate(departureDate.getDate() + durationDays);
 
+            const city = citiesMap.get(hotelInfo.cityKey)?.title_ru || 'Unknown City';
 
-            return {
+            return [{
                 id: `${entry.id_hotel}-${priceList.id_price}-${entry.id_ns}`,
                 country: targetCountry.title_ru,
-                city: cities.find(c => c.id === hotelInfo.cityKey)?.title_ru || 'Unknown City',
+                city,
                 departureDate: format(departureDate, 'yyyy-MM-dd'),
                 returnDate: format(returnDate, 'yyyy-MM-dd'),
                 price: parseInt(priceInfo.RUR || priceInfo.amount, 10), // Prefer RUR, fallback to amount
@@ -158,13 +167,13 @@ export async function searchTours(criteria: SearchCriteria): Promise<Tour[]> {
                 maxPrice,
                 hotel: {
                     name: hotelInfo.name,
-                    address: `${cities.find(c => c.id === hotelInfo.cityKey)?.title_ru}, ${targetCountry.title_ru}`, // Mock address
+                    address: [city, targetCountry.title_ru].filter(Boolean).join(', '),
                     stars: parseInt(hotelInfo.stars, 10) || 0,
                 },
                 imageUrl: `https://picsum.photos/seed/${entry.id_hotel}/600/400`,
                 imageHint: 'hotel exterior',
-            };
-        }).filter((t): t is Tour => t !== null);
+            }];
+        });
 
         allFoundTours = [...allFoundTours, ...toursFromPriceList];
     }

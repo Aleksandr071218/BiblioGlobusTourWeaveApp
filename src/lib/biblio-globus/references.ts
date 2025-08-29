@@ -29,6 +29,9 @@ type ApiClient = Awaited<ReturnType<typeof createApiClient>>;
 const fetchData = async (apiClient: ApiClient, url: string, key?: string) => {
     const response = await apiClient(url, { next: { revalidate: 86400 } }); // Cache for 24 hours
     if (!response.ok) {
+        console.error(`Failed to fetch reference data from ${url}: ${response.status} ${response.statusText}`);
+        const text = await response.text();
+        console.error(`Response body: ${text}`);
         throw new Error(`Failed to fetch reference data from ${url}: ${response.statusText}`);
     }
     const data = await response.json();
