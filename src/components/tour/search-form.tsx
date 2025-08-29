@@ -121,7 +121,6 @@ export function SearchForm({ onSearch, isSearching }: SearchFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Any</SelectItem>
                         <SelectItem value="5*">5 Stars</SelectItem>
                         <SelectItem value="4*">4 Stars</SelectItem>
                         <SelectItem value="3*">3 Stars</SelectItem>
@@ -144,7 +143,6 @@ export function SearchForm({ onSearch, isSearching }: SearchFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Any</SelectItem>
                         <SelectItem value="AO">Without meals (AO)</SelectItem>
                         <SelectItem value="BB">Breakfast (BB)</SelectItem>
                         <SelectItem value="HB">Half board (HB)</SelectItem>
