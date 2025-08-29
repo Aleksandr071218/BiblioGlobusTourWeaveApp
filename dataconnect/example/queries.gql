@@ -1,0 +1,26 @@
+mutation CreateTour @auth(level: USER) {
+  tour_insert(data: {
+    name: "New Tour",
+    description: "A new tour description",
+    createdByUid_expr: "auth.uid"
+  })
+}
+
+query ListMyTours @auth(level: USER) {
+  tours(where: {createdByUid: {eq_expr: "auth.uid"}}) {
+    id
+    name
+    description
+  }
+}
+
+mutation UpdateTour($id: UUID!, $name: String, $description: String) @auth(level: USER) {
+  tour_update(key: {id: $id}, data: {
+    name: $name,
+    description: $description
+  })
+}
+
+mutation DeleteTour($id: UUID!) @auth(level: USER) {
+  tour_delete(key: {id: $id})
+}

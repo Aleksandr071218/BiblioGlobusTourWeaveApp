@@ -93,7 +93,18 @@ export function TourResultsTable({ tours, isLoading }: TourResultsTableProps) {
                     {format(new Date(tour.departureDate), 'MMM dd, yyyy')} - {format(new Date(tour.returnDate), 'MMM dd, yyyy')}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary">${tour.price.toLocaleString()}</Badge>
+                    {tour.minPrice !== undefined && tour.maxPrice !== undefined ? (
+                      <>
+                        <Badge variant="secondary">
+                          ${tour.minPrice.toLocaleString()} - ${tour.maxPrice.toLocaleString()}
+                        </Badge>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          от {tour.minPrice.toLocaleString()} руб. за человека
+                        </div>
+                      </>
+                    ) : (
+                      <Badge variant="secondary">${tour.price?.toLocaleString() ?? 'N/A'}</Badge>
+                    )}
                   </TableCell>
                 </TableRow>
               ))

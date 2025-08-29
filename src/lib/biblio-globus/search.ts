@@ -136,6 +136,11 @@ export async function searchTours(criteria: SearchCriteria): Promise<Tour[]> {
             
             if (!hotelInfo || !priceInfo) return null;
 
+            // Calculate min and max prices from all prices in the entry
+            const prices = entry.prices.map(p => parseInt(p.RUR || p.amount, 10)).filter(p => !isNaN(p));
+            const minPrice = prices.length > 0 ? Math.min(...prices) : undefined;
+            const maxPrice = prices.length > 0 ? Math.max(...prices) : undefined;
+
             const departureDate = new Date(priceList.date.split('.').reverse().join('-'));
             const durationDays = parseInt(entry.duration, 10);
             const returnDate = new Date(departureDate);
@@ -149,6 +154,8 @@ export async function searchTours(criteria: SearchCriteria): Promise<Tour[]> {
                 departureDate: format(departureDate, 'yyyy-MM-dd'),
                 returnDate: format(returnDate, 'yyyy-MM-dd'),
                 price: parseInt(priceInfo.RUR || priceInfo.amount, 10), // Prefer RUR, fallback to amount
+                minPrice,
+                maxPrice,
                 hotel: {
                     name: hotelInfo.name,
                     address: `${cities.find(c => c.id === hotelInfo.cityKey)?.title_ru}, ${targetCountry.title_ru}`, // Mock address

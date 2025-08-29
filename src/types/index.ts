@@ -17,6 +17,8 @@ export interface Tour {
   hotel: Hotel;
   imageUrl: string;
   imageHint: string;
+  minPrice?: number; // Minimum price from the price list
+  maxPrice?: number; // Maximum price from the price list
 }
 
 export type ReviewSummary = SummarizeHotelReviewsOutput;
