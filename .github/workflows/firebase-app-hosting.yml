@@ -35,12 +35,19 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Deploy to Firebase App Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
-          channelId: 'preview'
+      - name: Setup Firebase credentials
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > /tmp/google-credentials.json
+      
+      - name: Deploy to Firebase Preview Channel
+        if: github.event_name == 'pull_request'
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/google-credentials.json
+          npx firebase-tools hosting:channel:deploy pr-${{ github.event.number }} --expires 7d --project ${{ secrets.FIREBASE_PROJECT_ID }} --json
+
+      - name: Deploy to Firebase Live Channel
+        if: github.ref == 'refs/heads/main'
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/google-credentials.json
+          npx firebase-tools deploy --only hosting --project ${{ secrets.FIREBASE_PROJECT_ID }} --json
           
           
