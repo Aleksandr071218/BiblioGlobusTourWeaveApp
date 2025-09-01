@@ -35,6 +35,9 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Enable webframeworks experiment
+        run: npx firebase-tools experiments:enable webframeworks
+
       - name: Setup Firebase credentials
         run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > /tmp/google-credentials.json
       
