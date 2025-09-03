@@ -21,7 +21,7 @@
 
 ## 4. Документация
 
-*   Всегда обновляйте `TODOLIST.md` и `CHANGELOG.md` после внесения изменений.
+*   Всегда обновляйте `TODOLIST.md` и `CHANGELOG.md` `CI_CD_SETUP.md`, `SYSTEM_OVERVIEW.md` и `AGENT_INSTRUCTIONS.md`после внесения изменений.
 *   Поддерживайте актуальность основной документации `README.md`.
 
 ## 5. Коммуникация
