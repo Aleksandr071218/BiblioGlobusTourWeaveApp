@@ -122,7 +122,7 @@ jobs:
           service_account: 'YOUR_SERVICE_ACCOUNT_EMAIL'
 
       - name: Deploy to Firebase App Hosting
-        uses: firebase/actions/deploy-app-hosting@v0
+        uses: firebase-actions/deploy-app-hosting@v0
         with:
           projectId: 'YOUR_FIREBASE_PROJECT_ID'
           siteId: 'studio' # ID вашего бэкенда в App Hosting

@@ -23,7 +23,7 @@ jobs:
           service_account: 'firebase-app-hosting-compute@biblioglobustourweaveapp.iam.gserviceaccount.com'
 
       - name: Deploy to Firebase App Hosting
-        uses: firebase/actions/deploy-app-hosting@v0
+        uses: firebase-actions/deploy-app-hosting@v0
         with:
           projectId: 'biblioglobustourweaveapp'
           siteId: 'studio' # ID вашего бэкенда в App Hosting
