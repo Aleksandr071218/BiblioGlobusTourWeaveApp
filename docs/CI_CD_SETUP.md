@@ -62,6 +62,16 @@
 | `BIBLIO_GLOBUS_PASSWORD`         | `BIBLIO_GLOBUS_PASSWORD`         |
 | `GOOGLE_PLACES_API_KEY`          | `GOOGLE_PLACES_API_KEY`          |
 
+### 2.1. Предоставление доступа к секретам
+
+**Это критически важный шаг.** Чтобы ваш бэкенд App Hosting мог читать секреты из Secret Manager во время сборки и выполнения, его сервисный аккаунт должен иметь соответствующие права.
+
+Выполните следующую команду в вашем терминале (требуется Firebase CLI):
+```bash
+firebase apphosting:secrets:grantaccess NEXT_PUBLIC_FIREBASE_CONFIG,BIBLIO_GLOBUS_LOGIN,BIBLIO_GLOBUS_PASSWORD,GOOGLE_PLACES_API_KEY --backend=studio
+```
+Эта команда автоматически предоставит сервисному аккаунту вашего бэкенда (`firebase-app-hosting-compute@...`) роль "Secret Manager Secret Accessor" для указанных секретов.
+
 ## Часть 3. Настройка GitHub для безопасного CI/CD
 
 **Цель:** Настроить GitHub Actions для автоматического развертывания при каждом коммите в `main`, используя безопасную аутентификацию без долгоживущих ключей.
@@ -122,7 +132,7 @@ jobs:
           service_account: 'YOUR_SERVICE_ACCOUNT_EMAIL'
 
       - name: Deploy to Firebase App Hosting
-        uses: firebase-actions/deploy-app-hosting@v0
+        uses: firebase-actions/apphosting-deploy@v0
         with:
           projectId: 'YOUR_FIREBASE_PROJECT_ID'
           siteId: 'studio' # ID вашего бэкенда в App Hosting
@@ -132,7 +142,7 @@ jobs:
 - Замените `YOUR_PROJECT_NUMBER`, `YOUR_POOL_ID`, `YOUR_PROVIDER_ID`, `YOUR_SERVICE_ACCOUNT_EMAIL` и `YOUR_FIREBASE_PROJECT_ID` на ваши реальные значения.
 - **Как это работает:**
     - `google-github-actions/auth` получает кратковременный токен доступа для вашего сервисного аккаунта.
-    - `firebase/actions/deploy-app-hosting` использует этот токен для аутентификации и *запускает* процесс сборки и развертывания в Firebase App Hosting.
+    - `firebase-actions/apphosting-deploy` использует этот токен для аутентификации и *запускает* процесс сборки и развертывания в Firebase App Hosting.
     - Сами секреты (`NEXT_PUBLIC_FIREBASE_CONFIG` и др.) **не передаются** в GitHub Actions. Они будут безопасно внедрены в ваше приложение уже на стороне Google Cloud во время сборки, согласно настройкам переменных окружения, которые вы задали в Части 2.
 
 После выполнения всех этих шагов, каждый коммит в ветку `main` будет автоматически запускать безопасное развертывание вашего приложения.
