@@ -22,8 +22,13 @@ jobs:
           workload_identity_provider: 'projects/77706967342/locations/global/workloadIdentityPools/1235465465123123/providers/234523546234562452456'
           service_account: 'firebase-app-hosting-compute@biblioglobustourweaveapp.iam.gserviceaccount.com'
 
-      - name: Deploy to Firebase App Hosting
-        uses: firebase-actions/apphosting-deploy@v0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          projectId: 'biblioglobustourweaveapp'
-          siteId: 'studio' # ID вашего бэкенда в App Hosting
+          node-version: '20'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy to Firebase App Hosting
+        run: firebase apphosting:deploy --project biblioglobustourweaveapp --backend studio

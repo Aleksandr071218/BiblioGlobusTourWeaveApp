@@ -131,11 +131,16 @@ jobs:
           workload_identity_provider: 'projects/YOUR_PROJECT_NUMBER/locations/global/workloadIdentityPools/YOUR_POOL_ID/providers/YOUR_PROVIDER_ID'
           service_account: 'YOUR_SERVICE_ACCOUNT_EMAIL'
 
-      - name: Deploy to Firebase App Hosting
-        uses: firebase-actions/apphosting-deploy@v0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          projectId: 'YOUR_FIREBASE_PROJECT_ID'
-          siteId: 'studio' # ID вашего бэкенда в App Hosting
+          node-version: '20'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy to Firebase App Hosting
+        run: firebase apphosting:deploy --project YOUR_FIREBASE_PROJECT_ID --backend studio
 ```
 
 **Важные замечания по воркфлоу:**
