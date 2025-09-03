@@ -10,6 +10,14 @@ import { getFirestore } from 'firebase/firestore';
 const getFirebaseConfig = (): FirebaseOptions => {
   const configStr = process.env.NEXT_PUBLIC_FIREBASE_CONFIG;
 
+  // --- DEBUGGING START ---
+  // Этот блок поможет нам увидеть, что именно приходит в переменную окружения во время сборки.
+  console.log('--- Firebase Config Debug ---');
+  console.log(`Type of configStr: ${typeof configStr}`);
+  console.log(`Value of configStr: "${configStr}"`);
+  console.log('-----------------------------');
+  // --- DEBUGGING END ---
+
   // Only attempt to parse if it looks like a JSON object.
   if (configStr && configStr.trim().startsWith('{')) {
     try {
