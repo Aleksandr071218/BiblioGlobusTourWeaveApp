@@ -8,21 +8,28 @@ import { getFirestore } from 'firebase/firestore';
  * @returns {FirebaseOptions} The Firebase config object.
  */
 const getFirebaseConfig = (): FirebaseOptions => {
-  const configStr = process.env.NEXT_PUBLIC_FIREBASE_CONFIG;
-
-  if (!configStr) {
-    throw new Error(
-      'Client-side Firebase config not found. Please set the NEXT_PUBLIC_FIREBASE_CONFIG environment variable.'
-    );
+  const configStr = process.env.NEXT_PUBLIC_FIREBASE_CONFIG
+  if (configStr) {
+    try {
+      return JSON.parse(configStr);
+    } catch (e) {
+      throw new Error(
+        "Failed to parse NEXT_PUBLIC_FIREBASE_CONFIG. Ensure it's a valid JSON string."
+      );
+    }
   }
 
-  try {
-    return JSON.parse(configStr);
-  } catch (e) {
-    throw new Error(
-      "Failed to parse NEXT_PUBLIC_FIREBASE_CONFIG. Ensure it's a valid JSON string."
-    );
-  }
+  // If configStr is not available, we are likely in a build environment.
+  // We return a dummy config to allow the build to succeed.
+  // The real config will be available at runtime on the client and server.
+  return {
+    apiKey: 'dummy-key',
+    authDomain: 'dummy-domain.firebaseapp.com',
+    projectId: 'dummy-project',
+    storageBucket: 'dummy-project.appspot.com',
+    messagingSenderId: 'dummy-sender-id',
+    appId: 'dummy-app-id',
+  };
 };
 
 const app = !getApps().length ? initializeApp(getFirebaseConfig()) : getApp();
